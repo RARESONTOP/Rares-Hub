@@ -1,7 +1,8 @@
-local HttpService = game:GetService("HttpService") -- Replace with appropriate service in your environment
-local RunService = game:GetService("RunService") -- Replace with appropriate service in your environment
+-- Define necessary services
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
--- URL of the Maid.lua script
+-- URL of the Maid.lua script for cleanup management
 local maidUrl = "https://raw.githubusercontent.com/ModerkaScripts/Aztup-Hub-V3/master/files/utils/Maid.lua"
 
 -- Function to load and return Maid class
@@ -11,7 +12,7 @@ local function loadMaid()
 
     -- Load the script chunk
     local chunk = assert(loadstring(maidScript))
-    local Maid = chunk() -- This executes the script and returns the Maid class
+    local Maid = chunk() -- Execute the script and return the Maid class
 
     return Maid
 end
@@ -39,11 +40,29 @@ local function setScriptes(script)
     -- Replace with your setscriptes logic if needed
 end
 
+-- Function to remove textures from parts
+local function removeTexturesFromParts()
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Texture = ""  -- Remove texture by setting Texture property to an empty string
+        end
+    end
+end
+
+-- Function to remove textures from GUI elements
+local function removeTexturesFromGUI(guiElement)
+    for _, child in ipairs(guiElement:GetChildren()) do
+        if child:IsA("ImageLabel") or child:IsA("ImageButton") then
+            child.Image = ""  -- Remove image source by setting Image property to an empty string
+        end
+    end
+end
+
 -- Main FPS Boost Function
 local function fpsBoost(enable)
     for _, connection in ipairs(RunService.RenderStepped:GetConnections()) do
         local conScript = connection.Instance
-        if conScript and conScript:IsA("Script") and conScript.Name == "YourScriptName" then -- Adjust the condition as per your needs
+        if conScript and conScript:IsA("Script") and conScript.Name == "YourScriptName" then
             if enable then
                 enableRenderStep(connection)
                 hooked[connection.Function] = true
@@ -62,8 +81,7 @@ local function fpsBoost(enable)
                         return
                     end
 
-                    setScriptes(conScript)
-                    -- Adjust thread identity if necessary
+                    -- Simplified operation
                     pcall(connection.Function, dt)
                 end)
             else
@@ -78,6 +96,11 @@ task.spawn(function()
     while true do
         local enableBoost = true -- Replace with your logic to enable/disable FPS boost
         fpsBoost(enableBoost)
-        task.wait(1)
+        task.wait(1) -- Adjust wait time as needed
     end
 end)
+
+-- Example: Remove textures from parts and GUI elements
+removeTexturesFromParts()
+local guiElement = game.Players.LocalPlayer.PlayerGui.ScreenGuiNameHere -- Replace with your GUI element
+removeTexturesFromGUI(guiElement)

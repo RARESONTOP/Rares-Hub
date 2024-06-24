@@ -298,6 +298,7 @@ LeftGroupBox:AddToggle('ToggleBillboards', {
 })
 
 LeftGroupBox:AddDivider()
+
 local Lighting = game:GetService("Lighting")
 local fogEnabled = false
 local renderSteppedConnection = nil
@@ -669,10 +670,6 @@ LeftGroupBox:AddLabel('Speed Keybind'):AddKeyPicker('SpeedKeyPicker', {
 })
 
 LeftGroupBox:AddDivider()
-local Settings = {
-    BillboardEnabled = true,  -- Default state: billboards are enabled
-    SpeedEnabled = false,      -- Placeholder for speed toggle example
-}
 
 -- Function to create a billboard for all instances named "Galewax" under Workspace.Ingredients
 local function createGalewaxBillboards()

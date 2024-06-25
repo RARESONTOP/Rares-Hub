@@ -88,6 +88,66 @@ LeftGroupBox:AddToggle('PlayerEspToggle', {
         end
     end
 })
+-- Function to create the text label
+local function createTextLabel(player)
+    if player.Character and player.Character:FindFirstChild("Head") then
+        local head = player.Character.Head
+
+        -- Create a BillboardGui
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "BuyRaresHubLabel"
+        billboardGui.Adornee = head
+        billboardGui.Size = UDim2.new(0, 100, 0, 25)
+        billboardGui.StudsOffset = Vector3.new(0, 2, 0) -- Adjust the height above the head
+        billboardGui.AlwaysOnTop = true
+
+        -- Create the TextLabel
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Parent = billboardGui
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = "BUY RARES HUB"
+        textLabel.TextColor3 = Color3.new(1, 0, 0) -- Red color
+        textLabel.TextScaled = true
+        textLabel.Font = Enum.Font.SourceSansBold
+
+        -- Parent the BillboardGui to the character's head
+        billboardGui.Parent = head
+    end
+end
+
+-- Function to remove the text label when the player leaves
+local function removeTextLabel(player)
+    if player.Character and player.Character:FindFirstChild("Head") then
+        local head = player.Character.Head
+        local billboardGui = head:FindFirstChild("BuyRaresHubLabel")
+        if billboardGui then
+            billboardGui:Destroy()
+        end
+    end
+end
+
+-- Loop through all existing players and add the text label
+for _, player in pairs(game.Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function(character)
+        createTextLabel(player)
+    end)
+    if player.Character then
+        createTextLabel(player)
+    end
+end
+
+-- Listen for new players joining the game
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        createTextLabel(player)
+    end)
+end)
+
+-- Listen for players leaving the game
+game.Players.PlayerRemoving:Connect(removeTextLabel)
+
+
 local workspace = game:GetService("Workspace")
 local runService = game:GetService("RunService")
 local espEnabled = false -- Initial state of ESP (disabled)

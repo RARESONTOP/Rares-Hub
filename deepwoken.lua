@@ -1,4 +1,6 @@
-if game.PlaceId == 8668476218 then
+-- Function to create the text label
+
+if game.PlaceId  == 5735553160 then
     -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
@@ -50,7 +52,186 @@ local Tab2 = TabBox:AddTab('Tab 2')
 
 -- You can now call AddToggle, etc on the tabs you added to the Tabbox
 ]]
+-- Define necessary variables and services
+local Players = game:GetService("Players")
+local CollectionService = game:GetService("CollectionService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local workspace = game:GetService("Workspace")
+
+local playerSpectating = nil
+local playerSpectatingLabel = nil
+local lastUpdateAt = 0
+local spectateUpdateConn = nil
+
+-- Function to set the camera subject
+local function setCameraSubject(subject)
+    if subject == LocalPlayer.Character then
+        playerSpectating = nil
+        CollectionService:RemoveTag(LocalPlayer, 'ForcedSubject')
+
+        if playerSpectatingLabel then
+            playerSpectatingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            playerSpectatingLabel = nil
+        end
+
+        -- Disconnect the spectate update connection if it exists
+        if spectateUpdateConn then
+            spectateUpdateConn:Disconnect()
+            spectateUpdateConn = nil
+        end
+
+        -- Reset camera subject to LocalPlayer
+        workspace.CurrentCamera.CameraSubject = LocalPlayer.Character
+        return
+    end
+
+    CollectionService:AddTag(LocalPlayer, 'ForcedSubject')
+    workspace.CurrentCamera.CameraSubject = subject
+
+    -- Spawn a new update loop for spectating
+    spectateUpdateConn = task.spawn(function()
+        while true do
+            task.wait(1)  -- Adjust update rate as needed
+            if tick() - lastUpdateAt < 5 then
+                continue
+            end
+            lastUpdateAt = tick()
+
+            -- Perform operations when spectating, such as streaming around the camera
+            task.spawn(function()
+                LocalPlayer:RequestStreamAroundAsync(workspace.CurrentCamera.CFrame.Position)
+            end)
+        end
+    end)
+end
+
+-- Connect user input event for spectating
+UserInputService.InputBegan:Connect(function(inputObject)
+    -- Ensure left mouse click and relevant UI elements are present
+    if inputObject.UserInputType ~= Enum.UserInputType.MouseButton1 or not LocalPlayer:FindFirstChild('PlayerGui') or not LocalPlayer.PlayerGui:FindFirstChild('LeaderboardGui') then
+        return
+    end
+
+    local newPlayerSpectating
+    local newPlayerSpectatingLabel
+
+    -- Find the player to spectate in the leaderboard GUI
+    for _, v in ipairs(LocalPlayer.PlayerGui.LeaderboardGui.MainFrame.ScrollingFrame:GetChildren()) do
+        if v:IsA('Frame') and v:FindFirstChild('Player') and v.Player.TextTransparency ~= 0 then
+            newPlayerSpectating = v.Player.Text
+            newPlayerSpectatingLabel = v.Player
+            break
+        end
+    end
+
+    if not newPlayerSpectating then
+        return
+    end
+
+    -- Update spectating label color
+    if playerSpectatingLabel then
+        playerSpectatingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+
+    playerSpectatingLabel = newPlayerSpectatingLabel
+    playerSpectatingLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+
+    -- Set camera subject based on the player being spectated
+    if newPlayerSpectating == playerSpectating or newPlayerSpectating == LocalPlayer.Name then
+        setCameraSubject(LocalPlayer.Character)
+    else
+        playerSpectating = newPlayerSpectating
+
+        -- Find the player to spectate and set camera subject accordingly
+        local player = Players:FindFirstChild(playerSpectating)
+
+        if not player or not player.Character or not player.Character.PrimaryPart then
+            setCameraSubject(LocalPlayer.Character)
+            return
+        end
+
+        setCameraSubject(player.Character)
+    end
+end)
+
+-- Function to check if a player has the tool "Talent:Voideye"
+local function checkPlayerForTool(player)
+    local character = player.Character
+    if character then
+        local backpack = player.Backpack
+        local workspace = game:GetService("Workspace")
+
+        -- Check if the player has the tool in their Backpack
+        if backpack and backpack:FindFirstChild("Talent:Voideye") then
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Notification";
+                Text = player.Name .. " is a voidwalker!";
+                Icon = ""; -- You can add an icon URL here if needed
+                Duration = 5; -- Duration of the notification in seconds
+            })
+            return
+        end
+
+        -- Check if the player has the tool in their Character or its descendants
+        local function checkDescendants(parent)
+            for _, descendant in ipairs(parent:GetChildren()) do
+                if descendant:IsA("Tool") and descendant.Name == "Talent:Voideye" then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Notification";
+                        Text = player.Name .. " is a voidwalker!";
+                        Icon = ""; -- You can add an icon URL here if needed
+                        Duration = 5; -- Duration of the notification in seconds
+                    })
+                    return
+                end
+                checkDescendants(descendant)
+            end
+        end
+
+        -- Check the character and its descendants
+        if character then
+            checkDescendants(character)
+        end
+
+        -- Check the player's Backpack descendants
+        if backpack then
+            checkDescendants(backpack)
+        end
+
+        -- Check the player's PlayerGui descendants
+        local playerGui = player:FindFirstChild("PlayerGui")
+        if playerGui then
+            checkDescendants(playerGui)
+        end
+
+        -- Check the player's Workspace descendants
+        checkDescendants(workspace)
+    end
+end
+
+-- Function to handle player added event
+local function onPlayerAdded(player)
+    player.CharacterAdded:Connect(function(character)
+        checkPlayerForTool(player)
+    end)
+end
+
+-- Function to check all existing players periodically
+local function checkExistingPlayers()
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        checkPlayerForTool(player)
+    end
+end
+
+-- Connect the player added event
+game:GetService("Players").PlayerAdded:Connect(onPlayerAdded)
+
+-- Check existing players immediately when the script runs
+checkExistingPlayers()
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/mac2115/Cool-private/main/ESP"))()
+
 
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
 
@@ -88,65 +269,6 @@ LeftGroupBox:AddToggle('PlayerEspToggle', {
         end
     end
 })
--- Function to create the text label
-local function createTextLabel(player)
-    if player.Character and player.Character:FindFirstChild("Head") then
-        local head = player.Character.Head
-
-        -- Create a BillboardGui
-        local billboardGui = Instance.new("BillboardGui")
-        billboardGui.Name = "BuyRaresHubLabel"
-        billboardGui.Adornee = head
-        billboardGui.Size = UDim2.new(0, 100, 0, 25)
-        billboardGui.StudsOffset = Vector3.new(0, 2, 0) -- Adjust the height above the head
-        billboardGui.AlwaysOnTop = true
-
-        -- Create the TextLabel
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Parent = billboardGui
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Text = "BUY RARES HUB"
-        textLabel.TextColor3 = Color3.new(1, 0, 0) -- Red color
-        textLabel.TextScaled = true
-        textLabel.Font = Enum.Font.SourceSansBold
-
-        -- Parent the BillboardGui to the character's head
-        billboardGui.Parent = head
-    end
-end
-
--- Function to remove the text label when the player leaves
-local function removeTextLabel(player)
-    if player.Character and player.Character:FindFirstChild("Head") then
-        local head = player.Character.Head
-        local billboardGui = head:FindFirstChild("BuyRaresHubLabel")
-        if billboardGui then
-            billboardGui:Destroy()
-        end
-    end
-end
-
--- Loop through all existing players and add the text label
-for _, player in pairs(game.Players:GetPlayers()) do
-    player.CharacterAdded:Connect(function(character)
-        createTextLabel(player)
-    end)
-    if player.Character then
-        createTextLabel(player)
-    end
-end
-
--- Listen for new players joining the game
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        createTextLabel(player)
-    end)
-end)
-
--- Listen for players leaving the game
-game.Players.PlayerRemoving:Connect(removeTextLabel)
-
 
 local workspace = game:GetService("Workspace")
 local runService = game:GetService("RunService")
@@ -693,63 +815,6 @@ LeftGroupBox:AddLabel('Speed Keybind'):AddKeyPicker('SpeedKeyPicker', {
 
 LeftGroupBox:AddDivider()
 
--- Function to create a billboard for all instances named "Galewax" under Workspace.Ingredients
-local function createGalewaxBillboards()
-    local workspace = game:GetService("Workspace")
-    local ingredientsFolder = workspace:FindFirstChild("Ingredients")
-
-    if ingredientsFolder then
-        local galewaxInstances = ingredientsFolder:GetDescendants()
-
-        for _, instance in ipairs(galewaxInstances) do
-            if instance.Name == "Galewax" then
-                if Settings.BillboardEnabled then
-                    -- Create BillboardGui
-                    local billboard = Instance.new("BillboardGui")
-                    billboard.Size = UDim2.new(0, 100, 0, 20)  -- Smaller size of the billboard
-                    billboard.StudsOffset = Vector3.new(0, 2, 0)  -- Offset from the part it's attached to
-                    billboard.AlwaysOnTop = true  -- Billboard is always on top (visible through walls)
-
-                    -- Create TextLabel inside BillboardGui
-                    local textLabel = Instance.new("TextLabel", billboard)
-                    textLabel.Text = "[" .. instance.Name .. "]"  -- Display name in square brackets
-                    textLabel.TextScaled = true  -- Auto scale text based on the size of the billboard
-                    textLabel.Size = UDim2.new(1, 0, 1, 0)  -- Size of the text label (fill the billboard)
-                    textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)  -- Green color for text
-                    textLabel.BackgroundTransparency = 1  -- Make the background of the text label transparent
-
-                    -- Position the billboard in the game world relative to the instance
-                    billboard.Parent = instance
-                    billboard.Adornee = instance
-                else
-                    -- Remove existing billboards if disabled
-                    for _, child in ipairs(instance:GetChildren()) do
-                        if child:IsA("BillboardGui") then
-                            child:Destroy()
-                        end
-                    end
-                end
-            end
-        end
-    else
-        warn("Ingredients folder not found under Workspace.")
-    end
-end
-
--- Function to toggle billboards on/off
-local function toggleBillboards(enabled)
-    Settings.BillboardEnabled = enabled
-    createGalewaxBillboards()  -- Refresh billboards based on the new state
-end
-
--- Example of how to create a toggle in Roblox GUI (assuming a UI library like RoStrap or similar)
-LeftGroupBox:AddToggle('ToggleBillboards', {
-    Text = "Enable Galewax ESP",
-    Default = false,
-    Callback = function(enabled)
-        toggleBillboards(enabled)
-    end
-})
 
 -- LocalScript in StarterPlayerScripts or StarterCharacterScripts
 
@@ -858,111 +923,7 @@ LeftGroupBox:AddToggle('ESPToggle', {
         end
     end
 })
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
 
-local ESPEnabled = false
-local ESPConnections = {}
-
--- Function to create a BillboardGui
-local function createESP(part)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Adornee = part
-    billboard.Size = UDim2.new(0, 50, 0, 25)  -- Smaller default size
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "[Lamp]"
-    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- White color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-
-    textLabel.Parent = billboard
-    billboard.Parent = part
-end
-
--- Function to update the size of the BillboardGui based on distance
-local function updateESP()
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                local distance = (Camera.CFrame.Position - obj.PrimaryPart.Position).Magnitude
-                local scale = math.clamp(1 / distance * 100, 0.1, 1) -- Adjust scale based on distance
-                billboard.Size = UDim2.new(0, 50 * scale, 0, 25 * scale)
-            end
-        end
-    end
-end
-
--- Function to find and apply ESP to qualifying models
-local function applyESP()
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            if not obj:FindFirstChildOfClass("BillboardGui") then
-                createESP(obj)
-            end
-        end
-    end
-end
-
--- Function to enable ESP
-local function enableESP()
-    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildAdded:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChildWhichIsA("MeshPart") and child:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            createESP(child)
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildRemoved:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChildOfClass("BillboardGui") then
-            child:FindFirstChildOfClass("BillboardGui"):Destroy()
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = game:GetService("RunService").RenderStepped:Connect(updateESP)
-
-    applyESP()
-end
-
--- Function to disable ESP
-local function disableESP()
-    for _, connection in ipairs(ESPConnections) do
-        connection:Disconnect()
-    end
-    ESPConnections = {}
-
-    -- Clean up all existing ESP
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                billboard:Destroy()
-            end
-        end
-    end
-end
-
--- Toggle setup
-LeftGroupBox:AddToggle('ESPToggle', {
-    Text = 'ESP Lamp',
-    Default = false,
-    Tooltip = 'Toggle Lamp ESP',
-    Callback = function(NewValue)
-        ESPEnabled = NewValue
-        if ESPEnabled then
-            enableESP()
-        else
-            disableESP()
-        end
-    end
-})
 
 -- LocalScript in StarterPlayerScripts or StarterCharacterScripts
 
@@ -1109,7 +1070,7 @@ local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 
 -- I set NoUI so it does not show up in the keybinds menu
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'RightShift', NoUI = true, Text = 'Menu keybind' })
 
 Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
 
@@ -1775,6 +1736,63 @@ LeftGroupBox:AddLabel('Speed Keybind'):AddKeyPicker('SpeedKeyPicker', {
 })
 
 
+-- Function to create a billboard for all instances named "Galewax" under Workspace.Ingredients
+local function createGalewaxBillboards()
+    local workspace = game:GetService("Workspace")
+    local ingredientsFolder = workspace:FindFirstChild("Ingredients")
+
+    if ingredientsFolder then
+        local galewaxInstances = ingredientsFolder:GetDescendants()
+
+        for _, instance in ipairs(galewaxInstances) do
+            if instance.Name == "Galewax" then
+                if Settings.BillboardEnabled then
+                    -- Create BillboardGui
+                    local billboard = Instance.new("BillboardGui")
+                    billboard.Size = UDim2.new(0, 100, 0, 20)  -- Smaller size of the billboard
+                    billboard.StudsOffset = Vector3.new(0, 2, 0)  -- Offset from the part it's attached to
+                    billboard.AlwaysOnTop = true  -- Billboard is always on top (visible through walls)
+
+                    -- Create TextLabel inside BillboardGui
+                    local textLabel = Instance.new("TextLabel", billboard)
+                    textLabel.Text = "[" .. instance.Name .. "]"  -- Display name in square brackets
+                    textLabel.TextScaled = true  -- Auto scale text based on the size of the billboard
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)  -- Size of the text label (fill the billboard)
+                    textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)  -- Green color for text
+                    textLabel.BackgroundTransparency = 1  -- Make the background of the text label transparent
+
+                    -- Position the billboard in the game world relative to the instance
+                    billboard.Parent = instance
+                    billboard.Adornee = instance
+                else
+                    -- Remove existing billboards if disabled
+                    for _, child in ipairs(instance:GetChildren()) do
+                        if child:IsA("BillboardGui") then
+                            child:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    else
+        warn("Ingredients folder not found under Workspace.")
+    end
+end
+
+-- Function to toggle billboards on/off
+local function toggleBillboards(enabled)
+    Settings.BillboardEnabled = enabled
+    createGalewaxBillboards()  -- Refresh billboards based on the new state
+end
+
+-- Example of how to create a toggle in Roblox GUI (assuming a UI library like RoStrap or similar)
+LeftGroupBox:AddToggle('ToggleBillboards', {
+    Text = "Enable Galewax ESP",
+    Default = false,
+    Callback = function(enabled)
+        toggleBillboards(enabled)
+    end
+})
 -- LocalScript in StarterPlayerScripts or StarterCharacterScripts
 
 local Workspace = game:GetService("Workspace")
@@ -1883,6 +1901,111 @@ LeftGroupBox:AddToggle('ESPToggle', {
     end
 })
 
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+local ESPEnabled = false
+local ESPConnections = {}
+
+-- Function to create a BillboardGui
+local function createESP(part)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = part
+    billboard.Size = UDim2.new(0, 50, 0, 25)  -- Smaller default size
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = "[Lamp]"
+    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- White color
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.SourceSansBold
+
+    textLabel.Parent = billboard
+    billboard.Parent = part
+end
+
+-- Function to update the size of the BillboardGui based on distance
+local function updateESP()
+    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
+            local billboard = obj:FindFirstChildOfClass("BillboardGui")
+            if billboard then
+                local distance = (Camera.CFrame.Position - obj.PrimaryPart.Position).Magnitude
+                local scale = math.clamp(1 / distance * 100, 0.1, 1) -- Adjust scale based on distance
+                billboard.Size = UDim2.new(0, 50 * scale, 0, 25 * scale)
+            end
+        end
+    end
+end
+
+-- Function to find and apply ESP to qualifying models
+local function applyESP()
+    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
+            if not obj:FindFirstChildOfClass("BillboardGui") then
+                createESP(obj)
+            end
+        end
+    end
+end
+
+-- Function to enable ESP
+local function enableESP()
+    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildAdded:Connect(function(child)
+        if child:IsA("Model") and child:FindFirstChildWhichIsA("MeshPart") and child:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
+            createESP(child)
+        end
+    end)
+
+    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildRemoved:Connect(function(child)
+        if child:IsA("Model") and child:FindFirstChildOfClass("BillboardGui") then
+            child:FindFirstChildOfClass("BillboardGui"):Destroy()
+        end
+    end)
+
+    ESPConnections[#ESPConnections + 1] = game:GetService("RunService").RenderStepped:Connect(updateESP)
+
+    applyESP()
+end
+
+-- Function to disable ESP
+local function disableESP()
+    for _, connection in ipairs(ESPConnections) do
+        connection:Disconnect()
+    end
+    ESPConnections = {}
+
+    -- Clean up all existing ESP
+    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
+        if obj:IsA("Model") then
+            local billboard = obj:FindFirstChildOfClass("BillboardGui")
+            if billboard then
+                billboard:Destroy()
+            end
+        end
+    end
+end
+
+-- Toggle setup
+LeftGroupBox:AddToggle('ESPToggle', {
+    Text = 'ESP Lamp',
+    Default = false,
+    Tooltip = 'Toggle Lamp ESP',
+    Callback = function(NewValue)
+        ESPEnabled = NewValue
+        if ESPEnabled then
+            enableESP()
+        else
+            disableESP()
+        end
+    end
+})
 
 -- LocalScript in StarterPlayerScripts or StarterCharacterScripts
 
@@ -2029,7 +2152,7 @@ local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 
 -- I set NoUI so it does not show up in the keybinds menu
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'RightShift', NoUI = true, Text = 'Menu keybind' })
 
 Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
 

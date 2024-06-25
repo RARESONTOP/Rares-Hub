@@ -1227,7 +1227,7 @@ local camera = Workspace.CurrentCamera
 local mobNames = {
     "knight", "broodlord", "nautilodaunt", "owl",  "crocco", "crabbo", "gigamed", "avatar", "iceguy", "iceguybrute",
     "duke", "boneboy", "etrean", "chaser", "bounder", "ethiron", "diver", "bonekeeper", "carbuncle", "lionfish",
-    "corrupted", "megalodaunt", "turtle", "monky", "immortal"
+    "corrupted", "megalodaunt", "turtle", "monky", "immortal", "enforcer"
 }
 
 -- ESP Active flag

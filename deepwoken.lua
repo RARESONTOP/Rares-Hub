@@ -236,8 +236,7 @@ local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaste
 
 -- Initial ESP settings
 ESP.Enabled = false; -- Initially disabled
-ESP.ShowBox = true;
-ESP.BoxType = "2D";
+ESP.ShowBox = false;
 ESP.ShowName = true;
 ESP.ShowHealth = true;
 ESP.ShowTracer = false;

@@ -88,160 +88,118 @@ LeftGroupBox:AddToggle('PlayerEspToggle', {
         end
     end
 })
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
+local workspace = game:GetService("Workspace")
+local runService = game:GetService("RunService")
+local espEnabled = false -- Initial state of ESP (disabled)
 
--- Player variables
-local player = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
-
--- List of mob names to include
-local mobNames = {
-    "knight", "broodlord", "nautilodaunt", "owl",  "crocco", "crabbo", "gigamed", "avatar", "iceguy", "iceguybrute",
-    "duke", "boneboy", "etrean", "chaser", "bounder", "ethiron", "diver", "bonekeeper", "carbuncle", "lionfish",
-    "corrupted", "megalodaunt", "turtle", "monky", "immortal"
-}
-
--- ESP Active flag
-local ESPActive = false
-
--- Dictionary to store ESP objects
-local espObjects = {}
-
--- Function to check if a mob's name is in the list
-local function isTargetMob(name)
-    for _, mobName in pairs(mobNames) do
-        if string.find(string.lower(name), mobName) then
-            return true
-        end
+-- Function to create a text label for a mob
+local function createESP(mob)
+    -- Check if the mob has a "Blood" value and exit if it does
+    if mob:FindFirstChild("Blood") then
+        return
     end
-    return false
+
+    -- Check if the mob already has a text label
+    if not mob:FindFirstChild("BillboardGui") then
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "BillboardGui"
+        billboardGui.Adornee = mob:FindFirstChild("HumanoidRootPart") or mob.PrimaryPart
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the mob's head
+        billboardGui.AlwaysOnTop = true
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White color for text
+        textLabel.TextStrokeTransparency = 0
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 14
+        textLabel.Parent = billboardGui
+
+        billboardGui.Parent = mob
+
+        -- Function to update the text label
+        local function updateLabel()
+            local humanoid = mob:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                textLabel.Text = string.format("[%d/%d] %s", humanoid.Health, humanoid.MaxHealth, mob.Name)
+            else
+                textLabel.Text = mob.Name
+            end
+        end
+
+        -- Initial update
+        updateLabel()
+
+        -- Update the text label whenever the humanoid's health changes
+        local humanoid = mob:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.HealthChanged:Connect(updateLabel)
+        end
+
+        -- Listen for new children to handle dynamically added humanoids
+        mob.ChildAdded:Connect(function(child)
+            if child:IsA("Humanoid") then
+                updateLabel()
+                child.HealthChanged:Connect(updateLabel)
+            end
+        end)
+    end
 end
 
--- Function to add ESP for a mob
-local function addESP(mob)
-    if not mob:IsA("Model") then return end
-    if not mob:FindFirstChild("HumanoidRootPart") or not mob:FindFirstChild("Humanoid") then return end
-
-    -- Check if ESP is already added
-    if espObjects[mob] then return end
-
-    -- Billboard GUI setup
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESP"
-    billboard.Size = UDim2.new(0, 200, 0, 50) -- Adjusted size for better visibility
-    billboard.Adornee = mob.HumanoidRootPart
-    billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 3, 0) -- Adjust the offset as needed
-
-    -- Text setup
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.new(1, 1, 1) -- White color for text
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.Text = ""
-    textLabel.TextXAlignment = Enum.TextXAlignment.Left -- Align HP to the left
-    textLabel.Parent = billboard
-
-    -- Add to dictionary
-    espObjects[mob] = {
-        Billboard = billboard,
-        TextLabel = textLabel
-    }
-
-    -- Update text size function
-    local function updateTextSize()
-        if not mob.Parent or not mob:FindFirstChild("HumanoidRootPart") then
-            disconnectUpdateTextSize()
-            return
-        end
-        
-        local distance = (camera.CFrame.p - mob.HumanoidRootPart.CFrame.p).Magnitude
-        local scaleFactor = math.clamp(1 - (distance - 8) / 40, 0.3, 1) -- Adjust as needed
-
-        textLabel.TextSize = 14 * scaleFactor -- Base text size multiplied by the scaleFactor
-    end
-
-    -- Disconnect function for update text size
-    local disconnectUpdateTextSize = function()
-        if espObjects[mob] then
-            espObjects[mob].TextLabel:Destroy()
-            espObjects[mob].Billboard:Destroy()
-            espObjects[mob] = nil
-        end
-    end
-
-    -- Update text size initially
-    updateTextSize()
-
-    -- Update text size continuously
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
-        if mob:FindFirstChild("Humanoid") then
-            textLabel.Text = string.format("[%d/%d] %s", mob.Humanoid.Health, mob.Humanoid.MaxHealth, mob.Name)
-            updateTextSize()
-        else
-            disconnectUpdateTextSize()
-        end
-    end)
-
-    billboard.Parent = mob
-end
-
--- Function to check for mobs in Workspace.Live
-local function checkMobs()
-    if not ESPActive then return end
-    
-    -- Iterate over Workspace.Live descendants to find eligible mobs
-    for _, mob in pairs(Workspace.Live:GetDescendants()) do
-        if mob:IsA("Model") and not espObjects[mob] and isTargetMob(mob.Name) then
-            addESP(mob)
+-- Function to update ESP for all mobs
+local function updateESP()
+    for _, mob in pairs(workspace.Live:GetChildren()) do
+        if mob:IsA("Model") and not mob:FindFirstChildOfClass("Player") then
+            createESP(mob)
         end
     end
 end
 
--- Activate ESP function
-local function ActivateESP()
-    ESPActive = true
-    checkMobs()
-    -- Update less frequently
-    spawn(function()
-        while ESPActive do
-            checkMobs()
-            wait(0.1) -- Update every 0.1 seconds
+-- Function to toggle the visibility of all ESPs
+local function toggleESP(enabled)
+    espEnabled = enabled
+    for _, mob in pairs(workspace.Live:GetChildren()) do
+        if mob:IsA("Model") and not mob:FindFirstChildOfClass("Player") then
+            local billboardGui = mob:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = enabled
+            end
         end
-    end)
-end
-
--- Deactivate ESP function
-local function DeactivateESP()
-    ESPActive = false
-    -- Remove all existing ESP
-    for mob, esp in pairs(espObjects) do
-        esp.TextLabel:Destroy()
-        esp.Billboard:Destroy()
-        espObjects[mob] = nil
     end
 end
 
--- Example UI integration using your UI framework
-LeftGroupBox:AddToggle('MobEspToggle', {
-    Text = 'ESP Mobs',
-    Default = false,
-    Callback = function(NewValue)
-        ESPActive = NewValue
-        if ESPActive then
-            ActivateESP()
-        else
-            DeactivateESP()
+-- Run updateESP once at the beginning
+updateESP()
+
+-- Update ESP whenever new mobs are added
+workspace.Live.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and not child:FindFirstChildOfClass("Player") then
+        createESP(child)
+        if espEnabled then
+            local billboardGui = child:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = true
+            end
         end
+    end
+end)
+
+-- Optionally, you can update ESP regularly to ensure all mobs are covered
+runService.RenderStepped:Connect(updateESP)
+
+-- Example of adding a toggle button (replace with your actual UI library or method)
+LeftGroupBox:AddToggle('ToggleBillboards', {
+    Text = "Enable Mob ESP",  -- Text displayed for the toggle
+    Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
+    Callback = function(enabled)
+        toggleESP(enabled)  -- Call toggleESP function with the enabled state
     end
 })
+
+
 -- Define the function to toggle NPC name billboards
 local function toggleBillboards(enabled)
     -- Loop through each NPC in Workspace.NPCs
@@ -297,6 +255,9 @@ LeftGroupBox:AddToggle('ToggleBillboards', {
         toggleBillboards(enabled)  -- Call toggleBillboards function with the enabled state
     end
 })
+
+
+
 
 LeftGroupBox:AddDivider()
 
@@ -1068,7 +1029,7 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
         FrameCounter = 0;
     end;
 
-    Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
+    Library:SetWatermark(('Rares Hub| %s fps | %s ms'):format(
         math.floor(FPS),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));
@@ -1214,160 +1175,7 @@ LeftGroupBox:AddToggle('PlayerEspToggle', {
         end
     end
 })
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
 
--- Player variables
-local player = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
-
--- List of mob names to include
-local mobNames = {
-    "knight", "broodlord", "nautilodaunt", "owl",  "crocco", "crabbo", "gigamed", "avatar", "iceguy", "iceguybrute",
-    "duke", "boneboy", "etrean", "chaser", "bounder", "ethiron", "diver", "bonekeeper", "carbuncle", "lionfish",
-    "corrupted", "megalodaunt", "turtle", "monky", "immortal", "enforcer"
-}
-
--- ESP Active flag
-local ESPActive = false
-
--- Dictionary to store ESP objects
-local espObjects = {}
-
--- Function to check if a mob's name is in the list
-local function isTargetMob(name)
-    for _, mobName in pairs(mobNames) do
-        if string.find(string.lower(name), mobName) then
-            return true
-        end
-    end
-    return false
-end
-
--- Function to add ESP for a mob
-local function addESP(mob)
-    if not mob:IsA("Model") then return end
-    if not mob:FindFirstChild("HumanoidRootPart") or not mob:FindFirstChild("Humanoid") then return end
-
-    -- Check if ESP is already added
-    if espObjects[mob] then return end
-
-    -- Billboard GUI setup
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESP"
-    billboard.Size = UDim2.new(0, 200, 0, 50) -- Adjusted size for better visibility
-    billboard.Adornee = mob.HumanoidRootPart
-    billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 3, 0) -- Adjust the offset as needed
-
-    -- Text setup
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.new(1, 1, 1) -- White color for text
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.Text = ""
-    textLabel.TextXAlignment = Enum.TextXAlignment.Left -- Align HP to the left
-    textLabel.Parent = billboard
-
-    -- Add to dictionary
-    espObjects[mob] = {
-        Billboard = billboard,
-        TextLabel = textLabel
-    }
-
-    -- Update text size function
-    local function updateTextSize()
-        if not mob.Parent or not mob:FindFirstChild("HumanoidRootPart") then
-            disconnectUpdateTextSize()
-            return
-        end
-        
-        local distance = (camera.CFrame.p - mob.HumanoidRootPart.CFrame.p).Magnitude
-        local scaleFactor = math.clamp(1 - (distance - 8) / 40, 0.3, 1) -- Adjust as needed
-
-        textLabel.TextSize = 14 * scaleFactor -- Base text size multiplied by the scaleFactor
-    end
-
-    -- Disconnect function for update text size
-    local disconnectUpdateTextSize = function()
-        if espObjects[mob] then
-            espObjects[mob].TextLabel:Destroy()
-            espObjects[mob].Billboard:Destroy()
-            espObjects[mob] = nil
-        end
-    end
-
-    -- Update text size initially
-    updateTextSize()
-
-    -- Update text size continuously
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
-        if mob:FindFirstChild("Humanoid") then
-            textLabel.Text = string.format("[%d/%d] %s", mob.Humanoid.Health, mob.Humanoid.MaxHealth, mob.Name)
-            updateTextSize()
-        else
-            disconnectUpdateTextSize()
-        end
-    end)
-
-    billboard.Parent = mob
-end
-
--- Function to check for mobs in Workspace.Live
-local function checkMobs()
-    if not ESPActive then return end
-    
-    -- Iterate over Workspace.Live descendants to find eligible mobs
-    for _, mob in pairs(Workspace.Live:GetDescendants()) do
-        if mob:IsA("Model") and not espObjects[mob] and isTargetMob(mob.Name) then
-            addESP(mob)
-        end
-    end
-end
-
--- Activate ESP function
-local function ActivateESP()
-    ESPActive = true
-    checkMobs()
-    -- Update less frequently
-    spawn(function()
-        while ESPActive do
-            checkMobs()
-            wait(0.1) -- Update every 0.1 seconds
-        end
-    end)
-end
-
--- Deactivate ESP function
-local function DeactivateESP()
-    ESPActive = false
-    -- Remove all existing ESP
-    for mob, esp in pairs(espObjects) do
-        esp.TextLabel:Destroy()
-        esp.Billboard:Destroy()
-        espObjects[mob] = nil
-    end
-end
-
--- Example UI integration using your UI framework
-LeftGroupBox:AddToggle('MobEspToggle', {
-    Text = 'ESP Mobs',
-    Default = false,
-    Callback = function(NewValue)
-        ESPActive = NewValue
-        if ESPActive then
-            ActivateESP()
-        else
-            DeactivateESP()
-        end
-    end
-})
 -- Define the function to toggle NPC name billboards
 local function toggleBillboards(enabled)
     -- Loop through each NPC in Workspace.NPCs
@@ -1421,6 +1229,116 @@ LeftGroupBox:AddToggle('ToggleBillboards', {
     Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
     Callback = function(enabled)
         toggleBillboards(enabled)  -- Call toggleBillboards function with the enabled state
+    end
+})
+local workspace = game:GetService("Workspace")
+local runService = game:GetService("RunService")
+local espEnabled = false -- Initial state of ESP (disabled)
+
+-- Function to create a text label for a mob
+local function createESP(mob)
+    -- Check if the mob has a "Blood" value and exit if it does
+    if mob:FindFirstChild("Blood") then
+        return
+    end
+
+    -- Check if the mob already has a text label
+    if not mob:FindFirstChild("BillboardGui") then
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "BillboardGui"
+        billboardGui.Adornee = mob:FindFirstChild("HumanoidRootPart") or mob.PrimaryPart
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the mob's head
+        billboardGui.AlwaysOnTop = true
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White color for text
+        textLabel.TextStrokeTransparency = 0
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 14
+        textLabel.Parent = billboardGui
+
+        billboardGui.Parent = mob
+
+        -- Function to update the text label
+        local function updateLabel()
+            local humanoid = mob:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                textLabel.Text = string.format("[%d/%d] %s", humanoid.Health, humanoid.MaxHealth, mob.Name)
+            else
+                textLabel.Text = mob.Name
+            end
+        end
+
+        -- Initial update
+        updateLabel()
+
+        -- Update the text label whenever the humanoid's health changes
+        local humanoid = mob:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.HealthChanged:Connect(updateLabel)
+        end
+
+        -- Listen for new children to handle dynamically added humanoids
+        mob.ChildAdded:Connect(function(child)
+            if child:IsA("Humanoid") then
+                updateLabel()
+                child.HealthChanged:Connect(updateLabel)
+            end
+        end)
+    end
+end
+
+-- Function to update ESP for all mobs
+local function updateESP()
+    for _, mob in pairs(workspace.Live:GetChildren()) do
+        if mob:IsA("Model") and not mob:FindFirstChildOfClass("Player") then
+            createESP(mob)
+        end
+    end
+end
+
+-- Function to toggle the visibility of all ESPs
+local function toggleESP(enabled)
+    espEnabled = enabled
+    for _, mob in pairs(workspace.Live:GetChildren()) do
+        if mob:IsA("Model") and not mob:FindFirstChildOfClass("Player") then
+            local billboardGui = mob:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = enabled
+            end
+        end
+    end
+end
+
+-- Run updateESP once at the beginning
+updateESP()
+
+-- Update ESP whenever new mobs are added
+workspace.Live.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and not child:FindFirstChildOfClass("Player") then
+        createESP(child)
+        if espEnabled then
+            local billboardGui = child:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = true
+            end
+        end
+    end
+end)
+
+-- Optionally, you can update ESP regularly to ensure all mobs are covered
+runService.RenderStepped:Connect(updateESP)
+
+-- Example of adding a toggle button (replace with your actual UI library or method)
+LeftGroupBox:AddToggle('ToggleBillboards', {
+    Text = "Enable Mob ESP",  -- Text displayed for the toggle
+    Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
+    Callback = function(enabled)
+        toggleESP(enabled)  -- Call toggleESP function with the enabled state
     end
 })
 
@@ -2031,7 +1949,7 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
         FrameCounter = 0;
     end;
 
-    Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
+    Library:SetWatermark(('Rares Hub| %s fps | %s ms'):format(
         math.floor(FPS),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));

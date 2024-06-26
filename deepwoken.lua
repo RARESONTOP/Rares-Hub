@@ -236,7 +236,8 @@ local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaste
 
 -- Initial ESP settings
 ESP.Enabled = false; -- Initially disabled
-ESP.ShowBox = false;
+ESP.ShowBox = true;
+ESP.BoxType = "2D";
 ESP.ShowName = true;
 ESP.ShowHealth = true;
 ESP.ShowTracer = false;
@@ -440,6 +441,85 @@ LeftGroupBox:AddToggle('ToggleBillboards', {
 
 
 LeftGroupBox:AddDivider()
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = game.Players.LocalPlayer
+
+local intelligenceFarmConnection
+
+local function intelligenceFarm(toggle)
+	if not toggle then
+		if intelligenceFarmConnection then
+			intelligenceFarmConnection:Disconnect()
+			intelligenceFarmConnection = nil
+		end
+		return
+	end
+
+	local lastFarmRanAt = 0
+
+	intelligenceFarmConnection = RunService.Heartbeat:Connect(function()
+		if (tick() - lastFarmRanAt < 1) then return end
+		lastFarmRanAt = tick()
+
+		local tool = LocalPlayer.Backpack:FindFirstChild('Math Textbook') or LocalPlayer.Character:FindFirstChild('Math Textbook')
+		if not tool then
+			return ToastNotif.new({
+				text = 'You need to have Math Textbook in your inventory for the farm to work',
+				duration = 1
+			})
+		end
+
+		tool.Parent = LocalPlayer.Character
+		tool:Activate()
+
+		local choicePrompt = LocalPlayer.PlayerGui:FindFirstChild('ChoicePrompt')
+		if not choicePrompt then return end
+
+		local question = choicePrompt.ChoiceFrame.DescSheet.Desc.Text:gsub('[^%w%p%s]', '')
+		local operationType = question:match('%d+ (.-) ')
+
+		local number1 = question:match('What is (.-) ')
+		local number2 = question:match(operationType .. ' (.-)%?')
+
+		number2 = number2:gsub('by', '')
+		number1 = tonumber(number1)
+		number2 = tonumber(number2)
+
+		local result = 0
+
+		if operationType == 'minus' then
+			result = number1 - number2
+		elseif operationType == 'divided' then
+			result = number1 / number2
+		elseif operationType == 'plus' then
+			result = number1 + number2
+		elseif operationType == 'times' then
+			result = number1 * number2
+		end
+
+		for _, v in ipairs(choicePrompt.ChoiceFrame.Options:GetChildren()) do
+			if not v:IsA('TextButton') then continue end
+
+			if math.abs(tonumber(v.Name) - result) <= 1 then
+				choicePrompt.Choice:FireServer(v.Name)
+				break
+			end
+		end
+	end)
+end
+
+-- UI Integration
+LeftGroupBox:AddToggle('IntelligenceToggle', {
+    Text = 'Intelligence Farm',
+    Default = false,
+    Tooltip = 'Toggle Intelligence Farming',
+    Callback = function(NewValue)
+        intelligenceFarm(NewValue)
+    end
+})
+
 
 local Lighting = game:GetService("Lighting")
 local fogEnabled = false

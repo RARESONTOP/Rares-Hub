@@ -1,4 +1,45 @@
+local Notification = sharedRequire('Notifications.lua');
+local Players = game:GetService("Players")
 
+local function checkPlayerForVoidwalker(player)
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        local tool = backpack:FindFirstChild("Talent:Voideye")
+        if tool then
+            Notification.new({
+                text = player.Name .. " is a voidwalker",
+                duration = 5
+            })
+        end
+    end
+end
+
+local function onPlayerAdded(player)
+    -- Check the player when they join the game
+    checkPlayerForVoidwalker(player)
+
+    -- Also check when the player's backpack changes
+    player.ChildAdded:Connect(function(child)
+        if child:IsA("Backpack") then
+            child.ChildAdded:Connect(function(tool)
+                if tool.Name == "Talent:Voideye" then
+                    Notification.new({
+                        text = player.Name .. " is a voidwalker",
+                        duration = 5
+                    })
+                end
+            end)
+        end
+    end)
+end
+
+-- Connect to players already in the game
+for _, player in pairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+
+-- Connect to players who join the game in the future
+Players.PlayerAdded:Connect(onPlayerAdded)
 
 local library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
 local Wait = library.subs.Wait -- Only returns if the GUI has not been terminated. For 'while Wait() do' loops

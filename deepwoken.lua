@@ -1,57 +1,16 @@
--- Function to create the text label
 
-    -- New example script written by wally
--- You can suggest changes with a pull request or something
 
-local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+local library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
+local Wait = library.subs.Wait -- Only returns if the GUI has not been terminated. For 'while Wait() do' loops
 
-local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-
-local Window = Library:CreateWindow({
-    -- Set Center to true if you want the menu to appear in the center
-    -- Set AutoShow to true if you want the menu to appear when it is created
-    -- Position and Size are also valid options here
-    -- but you do not need to define them unless you are changing them :)
-
-    Title = 'Real Aztup Hub ',
-    Center = true,
-    AutoShow = true,
-    TabPadding = 8,
-    MenuFadeTime = 0.2
+local Rares = library:CreateWindow({
+    Name = "Real Aztup Hub",
+        Themeable = {
+            Background = "6280332781",
+            Transparency = 0.5
+        }
 })
 
--- CALLBACK NOTE:
--- Passing in callback functions via the initial element parameters (i.e. Callback = function(Value)...) works
--- HOWEVER, using Toggles/Options.INDEX:OnChanged(function(Value) ... ) is the RECOMMENDED way to do this.
--- I strongly recommend decoupling UI code from logic code. i.e. Create your UI elements FIRST, and THEN setup :OnChanged functions later.
-
--- You do not have to set your tabs & groups up this way, just a prefrence.
-local Tabs = {
-    -- Creates a new tab titled Main
-    Main = Window:AddTab('Main'),
-    ['UI Settings'] = Window:AddTab('UI Settings'),
-}
-
--- Groupbox and Tabbox inherit the same functions
--- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
-local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Player')
-
--- We can also get our Main tab via the following code:
--- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox('Groupbox')
-
--- Tabboxes are a tiny bit different, but here's a basic example:
---[[
-
-local TabBox = Tabs.Main:AddLeftTabbox() -- Add Tabbox on left side
-
-local Tab1 = TabBox:AddTab('Tab 1')
-local Tab2 = TabBox:AddTab('Tab 2')
-
--- You can now call AddToggle, etc on the tabs you added to the Tabbox
-]]
--- Define necessary variables and services
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
 local UserInputService = game:GetService("UserInputService")
@@ -154,124 +113,238 @@ UserInputService.InputBegan:Connect(function(inputObject)
     end
 end)
 
--- Function to check if a player has the tool "Talent:Voideye"
-local function checkPlayerForTool(player)
-    local character = player.Character
-    if character then
-        local backpack = player.Backpack
-        local workspace = game:GetService("Workspace")
-
-        -- Check if the player has the tool in their Backpack
-        if backpack and backpack:FindFirstChild("Talent:Voideye") then
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Notification";
-                Text = player.Name .. " is a voidwalker!";
-                Icon = ""; -- You can add an icon URL here if needed
-                Duration = 5; -- Duration of the notification in seconds
-            })
-            return
-        end
-
-        -- Check if the player has the tool in their Character or its descendants
-        local function checkDescendants(parent)
-            for _, descendant in ipairs(parent:GetChildren()) do
-                if descendant:IsA("Tool") and descendant.Name == "Talent:Voideye" then
-                    game.StarterGui:SetCore("SendNotification", {
-                        Title = "Notification";
-                        Text = player.Name .. " is a voidwalker!";
-                        Icon = ""; -- You can add an icon URL here if needed
-                        Duration = 5; -- Duration of the notification in seconds
-                    })
-                    return
-                end
-                checkDescendants(descendant)
-            end
-        end
-
-        -- Check the character and its descendants
-        if character then
-            checkDescendants(character)
-        end
-
-        -- Check the player's Backpack descendants
-        if backpack then
-            checkDescendants(backpack)
-        end
-
-        -- Check the player's PlayerGui descendants
-        local playerGui = player:FindFirstChild("PlayerGui")
-        if playerGui then
-            checkDescendants(playerGui)
-        end
-
-        -- Check the player's Workspace descendants
-        checkDescendants(workspace)
-    end
-end
-
--- Function to handle player added event
-local function onPlayerAdded(player)
-    player.CharacterAdded:Connect(function(character)
-        checkPlayerForTool(player)
-    end)
-end
-
--- Function to check all existing players periodically
-local function checkExistingPlayers()
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        checkPlayerForTool(player)
-    end
-end
-
--- Connect the player added event
-game:GetService("Players").PlayerAdded:Connect(onPlayerAdded)
-
--- Check existing players immediately when the script runs
-checkExistingPlayers()
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/mac2115/Cool-private/main/ESP"))()
 
 
-local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
+local MainTab = Rares:CreateTab({
+        Name = "Main"
+})
+local EspTab = Rares:CreateTab({
+    Name = "Esp"
+})
 
--- Initial ESP settings
-ESP.Enabled = false; -- Initially disabled
-ESP.ShowBox = true;
-ESP.BoxType = "2D";
-ESP.ShowName = true;
-ESP.ShowHealth = true;
-ESP.ShowTracer = false;
-ESP.ShowDistance = true;
+local APTab = Rares:CreateTab({
+    Name = "Visuals"
+})
 
-local EspEnabled = false -- Initially disabled
+local APSect = APTab:CreateSection({
+    Name = "Visuals"
+})
+local SectiePlayer = MainTab:CreateSection({
+Name = "Player"
+})
+local SectieFarm = MainTab:CreateSection({
+        Name = "Misc"
+})
+local SectieEsp = EspTab:CreateSection({
+    Name = "ESPS"
+})
 
--- Function to enable ESP for players
-local function EnablePlayerESP()
-    ESP.Enabled = true;
+local SectieVisual = APTab:CreateSection{
+    Name = "Visual"
+}
+
+local Utility = {}
+local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Example flags module or table
+local library = {
+    flags = {
+        flyHackValue = 40,  -- Example flag for fly hack velocity adjustment
+        flySpeedMultiplier = 3,  -- Example flag for adjusting fly speed
+        ascendSpeed = 1,  -- Example flag for ascend speed
+        descendSpeed = 1 -- Example flag for descend speed
+    }
+}
+
+-- Example utility function to get player data
+function Utility.getPlayerData()
+    -- Replace with actual implementation to get player data
+    return {
+        rootPart = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.PrimaryPart,
+        -- Assuming you want to use the character's primary part as rootPart
+    }
 end
 
--- Function to disable ESP for players
-local function DisablePlayerESP()
-    ESP.Enabled = false;
-end
+-- Fly function without using maid
+local flyBv = nil
+local flyHackConnection = nil
 
--- Creating a toggle in SectiePlayer for Player ESP
-LeftGroupBox:AddToggle('PlayerEspToggle', {
-    Text = 'ESP Players',
-    Default = false,
-    Callback = function(NewValue)
-        EspEnabled = NewValue
-        if EspEnabled then
-            EnablePlayerESP()
-        else
-            DisablePlayerESP()
+function fly(toggle)
+    if toggle then
+        if flyHackConnection then
+            return  -- Fly hack already connected
+        end
+
+        flyBv = Instance.new('BodyVelocity')
+        flyBv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+
+        flyHackConnection = RunService.Heartbeat:Connect(function()
+            local playerData = Utility.getPlayerData()
+            local rootPart, camera = playerData.rootPart, workspace.CurrentCamera
+            if not (rootPart and camera) then
+                return
+            end
+
+            if not CollectionService:HasTag(flyBv, 'AllowedBM') then
+                CollectionService:AddTag(flyBv, 'AllowedBM')
+            end
+
+            flyBv.Parent = rootPart
+
+            -- Calculate movement vector based on WASD and spacebar input
+            local moveVector = Vector3.new(0, 0, 0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                moveVector = moveVector + Vector3.new(0, 0, -1)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                moveVector = moveVector + Vector3.new(0, 0, 1)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                moveVector = moveVector + Vector3.new(-1, 0, 0)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                moveVector = moveVector + Vector3.new(1, 0, 0)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                moveVector = moveVector + Vector3.new(0, 1, 0) * library.flags.ascendSpeed
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                moveVector = moveVector + Vector3.new(0, -1, 0) * library.flags.descendSpeed
+            end
+
+            -- Apply velocity to the flyBv BodyVelocity instance
+            flyBv.Velocity = camera.CFrame:VectorToWorldSpace(moveVector * library.flags.flyHackValue * library.flags.flySpeedMultiplier)
+        end)
+    else
+        if not flyHackConnection then
+            return  -- Fly hack not connected
+        end
+
+        flyHackConnection:Disconnect()
+        flyHackConnection = nil
+
+        if flyBv then
+            flyBv:Destroy()
+            flyBv = nil
         end
     end
+end
+
+-- Integration into the GUI toggle format for Fly
+local flyEnabled = false
+
+local function toggleFly(enable)
+    flyEnabled = enable
+    fly(flyEnabled)
+end
+
+
+
+-- Add Toggle for Fly
+SectiePlayer:AddToggle({
+    Name = 'Fly',
+    Default = false,
+    Keybind = {
+        Mode = "Dynamic" -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+     },
+    Callback = function(NewValue)
+        toggleFly(NewValue)
+    end
 })
+
+SectiePlayer:AddSlider({
+    Name = 'Fly Velocity',
+    Value = flyHackValue,
+    Precise = 2,
+    Min = 20,
+    Max = 100,   
+    Callback = function(newValue)
+        library.flags.flyHackValue = newValue
+    end
+})
+
+local RunService = game:GetService("RunService")
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+
+local speedHackConnection
+local speedHackBv
+local speedHackEnabled = false
+local speedHackValue = 50  -- Default speed value
+
+-- Function to enable or disable speed hack
+local function toggleSpeedHack(toggle)
+    local player = Players.LocalPlayer
+    local character = player and player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+    if toggle then
+        if not speedHackEnabled and humanoid and rootPart then
+            speedHackBv = Instance.new('BodyVelocity')
+            speedHackBv.MaxForce = Vector3.new(100000, 0, 100000)
+            speedHackBv.Velocity = Vector3.new(0, 0, 0)
+            CollectionService:AddTag(speedHackBv, 'AllowedBM')
+            speedHackBv.Parent = rootPart
+
+            speedHackConnection = RunService.Heartbeat:Connect(function()
+                local moveDirection = humanoid.MoveDirection
+                if moveDirection.Magnitude > 0 then
+                    speedHackBv.Velocity = moveDirection * speedHackValue
+                else
+                    speedHackBv.Velocity = Vector3.new(0, 0, 0)
+                end
+            end)
+
+            speedHackEnabled = true
+        end
+    else
+        if speedHackConnection then
+            speedHackConnection:Disconnect()
+            speedHackConnection = nil
+        end
+
+        if speedHackBv then
+            speedHackBv:Destroy()
+            speedHackBv = nil
+        end
+
+        speedHackEnabled = false
+    end
+end
+
+-- Add Toggle for Speed Hack
+SectiePlayer:AddToggle({
+    Name = 'Speed Hack',
+    Default = false,
+    Keybind = {
+        Mode = "Dynamic" -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+     },
+    Callback = function(NewValue)
+        toggleSpeedHack(NewValue)
+    end
+})
+
+-- Add Slider for Speed Hack Velocity
+SectiePlayer:AddSlider({
+    Name = 'Speed Hack Velocity',
+    Value = speedHackValue,
+    Precise = 2,
+    Min = 16,
+    Max = 160,   
+    Callback = function(newValue)
+        speedHackValue = newValue
+    end
+})
+
 
 local workspace = game:GetService("Workspace")
 local runService = game:GetService("RunService")
 local espEnabled = false -- Initial state of ESP (disabled)
+local espColor = Color3.fromRGB(255, 255, 255) -- Default ESP color (white)
 
 -- Function to create a text label for a mob
 local function createESP(mob)
@@ -288,12 +361,13 @@ local function createESP(mob)
         billboardGui.Size = UDim2.new(0, 200, 0, 50)
         billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the mob's head
         billboardGui.AlwaysOnTop = true
+        billboardGui.Enabled = espEnabled -- Set initial visibility based on espEnabled
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Name = "TextLabel"
         textLabel.Size = UDim2.new(1, 0, 1, 0)
         textLabel.BackgroundTransparency = 1
-        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White color for text
+        textLabel.TextColor3 = espColor -- Set the initial text color
         textLabel.TextStrokeTransparency = 0
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.TextSize = 14
@@ -352,6 +426,22 @@ local function toggleESP(enabled)
     end
 end
 
+-- Function to update the color of all ESP text labels
+local function updateESPColor(color)
+    espColor = color
+    for _, mob in pairs(workspace.Live:GetChildren()) do
+        if mob:IsA("Model") and not mob:FindFirstChildOfClass("Player") then
+            local billboardGui = mob:FindFirstChild("BillboardGui")
+            if billboardGui then
+                local textLabel = billboardGui:FindFirstChild("TextLabel")
+                if textLabel then
+                    textLabel.TextColor3 = color
+                end
+            end
+        end
+    end
+end
+
 -- Run updateESP once at the beginning
 updateESP()
 
@@ -363,84 +453,482 @@ workspace.Live.ChildAdded:Connect(function(child)
             local billboardGui = child:FindFirstChild("BillboardGui")
             if billboardGui then
                 billboardGui.Enabled = true
+                local textLabel = billboardGui:FindFirstChild("TextLabel")
+                if textLabel then
+                    textLabel.TextColor3 = espColor
+                end
             end
         end
     end
 end)
 
--- Optionally, you can update ESP regularly to ensure all mobs are covered
-runService.RenderStepped:Connect(updateESP)
+-- Optional: Update ESP regularly to ensure all mobs are covered, but do this less frequently to reduce performance impact
+runService.Heartbeat:Connect(updateESP)
 
 -- Example of adding a toggle button (replace with your actual UI library or method)
-LeftGroupBox:AddToggle('ToggleBillboards', {
-    Text = "Enable Mob ESP",  -- Text displayed for the toggle
+SectieEsp:AddToggle({
+    Name = "Mob ESP",  -- Text displayed for the toggle
     Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
     Callback = function(enabled)
         toggleESP(enabled)  -- Call toggleESP function with the enabled state
     end
 })
 
-
--- Define the function to toggle NPC name billboards
-local function toggleBillboards(enabled)
-    -- Loop through each NPC in Workspace.NPCs
-    for _, npc in pairs(workspace.NPCs:GetChildren()) do
-        -- Check if the NPC has a Humanoid or a PrimaryPart
-        if npc:IsA("Model") and (npc:FindFirstChild("Humanoid") or npc.PrimaryPart) then
-            -- Find existing BillboardGui if it exists
-            local billboard = npc:FindFirstChild("NPCBillboard")
-            
-            -- If enabled is true and BillboardGui doesn't exist, create it
-            if enabled and not billboard then
-                billboard = Instance.new("BillboardGui")
-                billboard.Name = "NPCBillboard"
-                billboard.Size = UDim2.new(3.5, 0, 1.5, 0)  -- Increase size for better visibility
-                billboard.StudsOffset = Vector3.new(0, 3, 0) -- Offset above NPC's head
-
-                -- Create a TextLabel inside BillboardGui
-                local label = Instance.new("TextLabel")
-                label.Text = "[" .. npc.Name .. "]"  -- Display NPC's name in []
-                label.Size = UDim2.new(2, 0, 1.5, 0)
-                label.TextScaled = true
-                label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.new(1, 1, 1)
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-
-                -- Attach BillboardGui to NPC's HumanoidRootPart or PrimaryPart
-                if npc:FindFirstChild("HumanoidRootPart") then
-                    billboard.Parent = npc.HumanoidRootPart
-                elseif npc.PrimaryPart then
-                    billboard.Parent = npc.PrimaryPart
-                else
-                    billboard.Parent = npc
-                end
-
-                -- Make sure the BillboardGui faces the camera
-                billboard.AlwaysOnTop = true
-                billboard.Enabled = true
-                billboard.LightInfluence = 0
-            elseif not enabled and billboard then
-                -- If enabled is false and BillboardGui exists, remove it
-                billboard:Destroy()
-            end
-        end
-    end
-end
-
--- Assuming LeftGroupBox:AddToggle is a function provided by a plugin GUI library
-LeftGroupBox:AddToggle('ToggleBillboards', {
-    Text = "Enable NPC ESP",  -- Text displayed for the toggle
-    Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
-    Callback = function(enabled)
-        toggleBillboards(enabled)  -- Call toggleBillboards function with the enabled state
+-- Example of adding a color picker (replace with your actual UI library or method)
+SectieEsp:AddColorPicker({
+    Name = "ESP Color",  -- Text displayed for the color picker
+    Default = espColor,  -- Default color (white)
+    Callback = function(color)
+        updateESPColor(color)  -- Call updateESPColor function with the selected color
     end
 })
 
 
 
 
-LeftGroupBox:AddDivider()
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local EspEnabled = false -- Initial state of ESP (disabled)
+local EspColor = Color3.fromRGB(255, 255, 255) -- Default ESP color (white)
+
+-- Function to create a text label for an NPC
+local function createESP(npc)
+    -- Check if the NPC already has a text label
+    if not npc:FindFirstChild("BillboardGui") then
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "BillboardGui"
+        billboardGui.Adornee = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the NPC's head
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Enabled = EspEnabled -- Set initial visibility based on EspEnabled
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = EspColor -- Set the initial text color
+        textLabel.TextStrokeTransparency = 0
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 14
+        textLabel.Text = npc.Name
+        textLabel.Parent = billboardGui
+
+        billboardGui.Parent = npc
+    end
+end
+
+-- Function to update ESP for all NPCs
+local function updateESP()
+    for _, npc in pairs(Workspace.NPCs:GetChildren()) do
+        if npc:IsA("Model") then
+            createESP(npc)
+        end
+    end
+end
+
+-- Function to toggle the visibility of all ESPs
+local function toggleESP(enabled)
+    EspEnabled = enabled
+    for _, npc in pairs(Workspace.NPCs:GetChildren()) do
+        if npc:IsA("Model") then
+            local billboardGui = npc:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = enabled
+            end
+        end
+    end
+end
+
+-- Function to update the color of all ESP text labels
+local function updateESPColor(color)
+    EspColor = color
+    for _, npc in pairs(Workspace.NPCs:GetChildren()) do
+        if npc:IsA("Model") then
+            local billboardGui = npc:FindFirstChild("BillboardGui")
+            if billboardGui then
+                local textLabel = billboardGui:FindFirstChild("TextLabel")
+                if textLabel then
+                    textLabel.TextColor3 = color
+                end
+            end
+        end
+    end
+end
+
+-- Run updateESP once at the beginning
+updateESP()
+
+-- Update ESP whenever new NPCs are added
+Workspace.NPCs.ChildAdded:Connect(function(child)
+    if child:IsA("Model") then
+        createESP(child)
+        if EspEnabled then
+            local billboardGui = child:FindFirstChild("BillboardGui")
+            if billboardGui then
+                billboardGui.Enabled = true
+            end
+        end
+    end
+end)
+
+-- Optional: Update ESP regularly to ensure all NPCs are covered, but do this less frequently to reduce performance impact
+RunService.Heartbeat:Connect(updateESP)
+
+-- Example of adding a toggle button (replace with your actual UI library or method)
+SectieEsp:AddToggle({
+    Name = "ESP NPCs",  -- Text displayed for the toggle
+    Default = false,  -- Default state of the toggle (false means billboards are initially disabled)
+    Callback = function(enabled)
+        toggleESP(enabled)  -- Call toggleESP function with the enabled state
+    end
+})
+
+-- Example of adding a color picker (replace with your actual UI library or method)
+SectieEsp:AddColorPicker({
+    Name = "ESP Color",  -- Text displayed for the color picker
+    Default = EspColor,  -- Default color (white)
+    Callback = function(color)
+        updateESPColor(color)  -- Call updateESPColor function with the selected color
+    end
+})
+
+local workspace = game:GetService("Workspace")
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+
+local espEnabled = false -- Disable ESP by default
+local espColor = Color3.fromRGB(255, 255, 255) -- Default ESP color (white)
+local localPlayer = players.LocalPlayer
+
+-- Function to create a text label for a model
+local function createESP(model, label)
+    -- Check if the model has a RootPart
+    local rootPart = model:FindFirstChild("RootPart")
+    if not rootPart then
+        print("No RootPart found for model:", model.Name)
+        return
+    end
+
+    -- Check if the model already has a text label
+    if not model:FindFirstChild("BillboardGui") then
+        print("Creating ESP for model:", model.Name)
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "BillboardGui"
+        billboardGui.Adornee = rootPart
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the model's head
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Enabled = espEnabled -- Set initial visibility based on espEnabled
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "TextLabel"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = espColor -- Set the initial text color
+        textLabel.TextStrokeTransparency = 0
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 14
+        textLabel.Parent = billboardGui
+
+        billboardGui.Parent = model
+
+        -- Function to update the text label
+        local function updateLabel()
+            local playerRootPart = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if playerRootPart then
+                local distance = (playerRootPart.Position - rootPart.Position).Magnitude
+                textLabel.Text = string.format("[Chest][%.0f]", distance)
+            else
+                textLabel.Text = "[Chest][N/A]"
+            end
+        end
+
+        -- Initial update
+        updateLabel()
+
+        -- Connect the update function to the RenderStepped event
+        runService.RenderStepped:Connect(updateLabel)
+    else
+        print("ESP already exists for model:", model.Name)
+    end
+end
+
+-- Function to create ESP for all models in a given parent
+local function createESPForAll(parent, label)
+    for _, model in ipairs(parent:GetChildren()) do
+        createESP(model, label)
+    end
+end
+
+-- Function to toggle ESP
+local function toggleESP(enabled, parent, label)
+    espEnabled = enabled
+    for _, model in ipairs(parent:GetChildren()) do
+        local billboardGui = model:FindFirstChild("BillboardGui")
+        if billboardGui then
+            billboardGui.Enabled = enabled
+        else
+            createESP(model, label)
+        end
+    end
+end
+
+-- Function to update ESP color
+local function updateESPColor(color)
+    espColor = color
+    for _, model in ipairs(workspace.Thrown:GetChildren()) do
+        local billboardGui = model:FindFirstChild("BillboardGui")
+        if billboardGui then
+            local textLabel = billboardGui:FindFirstChild("TextLabel")
+            if textLabel then
+                textLabel.TextColor3 = color
+            end
+        end
+    end
+end
+
+-- Create ESP for existing models in Workspace.Thrown
+createESPForAll(workspace.Thrown, "Chest")
+
+-- Connect a function to handle new models being added to Workspace.Thrown
+workspace.Thrown.ChildAdded:Connect(function(model)
+    wait(0.1) -- Wait a brief moment to ensure the model is fully loaded
+    createESP(model, "Chest")
+end)
+
+-- UI elements for toggles and color picker
+-- Replace with your actual UI library or method
+SectieEsp:AddToggle({
+    Name = "Chest ESP",
+    Default = false,
+    Callback = function(enabled)
+        toggleESP(enabled, workspace.Thrown, "Chest")
+    end
+})
+
+SectieEsp:AddColorPicker({
+    Name = "ESP Color",
+    Default = espColor,
+    Callback = function(color)
+        updateESPColor(color)
+    end
+})
+
+
+
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
+
+--// Initial ESP settings
+ESP.Enabled = true;
+ESP.ShowBox = true;
+ESP.BoxType = "2D";
+ESP.ShowName = true;
+ESP.ShowHealth = true;
+ESP.ShowTracer = false;
+ESP.ShowDistance = true;
+
+local EspEnabled = true
+local EspColor = Color3.fromRGB(255, 255, 255) -- Default ESP color (white)
+
+-- Function to enable ESP
+function EnableESP()
+    ESP.Enabled = true;
+end
+
+-- Function to disable ESP
+function DisableESP()
+    ESP.Enabled = false;
+end
+
+-- Function to update ESP color
+function UpdateESPColor(color)
+    ESP.Color = color -- Assuming the ESP library supports setting a Color property
+end
+
+-- Creating a toggle in SectieEsp
+SectieEsp:AddToggle({
+    Name = "Esp Players",
+    Default = EspEnabled,
+    Callback = function(NewValue)
+        EspEnabled = NewValue
+        if EspEnabled then
+            EnableESP()
+        else
+            DisableESP()
+        end
+    end
+})
+
+
+
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+local infiniteJumpHeight = 50 -- Set your desired jump height here
+local infiniteJumpEnabled = false
+
+function infiniteJump(toggle)
+    infiniteJumpEnabled = toggle
+
+    if not toggle then return end
+
+    coroutine.wrap(function()
+        while infiniteJumpEnabled do
+            local character = LocalPlayer.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+            if rootPart and UserInputService:IsKeyDown(Enum.KeyCode.Space) and not UserInputService:GetFocusedTextBox() then
+                rootPart.Velocity = Vector3.new(rootPart.Velocity.X, infiniteJumpHeight, rootPart.Velocity.Z)
+            end
+
+            task.wait(0.1)
+        end
+    end)()
+end
+
+-- Adding the toggle to the GUI
+SectiePlayer:AddToggle({
+    Name = "Infinite Jump",
+    Keybind = {
+        Mode = "Dynamic", -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+    },
+    Value = infiniteJumpEnabled,
+    Callback = function(NewValue)
+        infiniteJump(NewValue)
+    end
+})
+
+local NoClipEnabled = false
+local Player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local connection -- Variable to store the RunService connection
+local originalCollideStates = {} -- Table to store the original CanCollide states
+
+local function EnableNoClip()
+    -- Store the original CanCollide state of each BasePart
+    for _, v in pairs(Player.Character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            originalCollideStates[v] = v.CanCollide
+        end
+    end
+    
+    connection = RunService.Stepped:Connect(function()
+        if NoClipEnabled then
+            for _, v in pairs(Player.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+local function DisableNoClip()
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    -- Restore the original CanCollide state of each BasePart
+    for _, v in pairs(Player.Character:GetDescendants()) do
+        if v:IsA("BasePart") and originalCollideStates[v] ~= nil then
+            v.CanCollide = originalCollideStates[v]
+        end
+    end
+    -- Clear the original states table
+    originalCollideStates = {}
+end
+
+SectiePlayer:AddToggle({
+    Name = "NoClip",
+    Keybind = {
+        Mode = "Dynamic" -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+    },
+    Default = NoClipEnabled,
+    Callback = function(NewValue)
+        NoClipEnabled = NewValue
+        if NoClipEnabled then
+            EnableNoClip()
+        else
+            DisableNoClip()
+        end
+    end
+})
+
+-- Ensure necessary services are initialized
+local RunService = game:GetService('RunService')
+local Players = game:GetService('Players')
+local UserInputService = game:GetService('UserInputService')
+local LocalPlayer = Players.LocalPlayer
+
+-- Configuration variables
+local spoofingEnabled = false
+local spoofingConnection = nil
+local oldAgilityValue = nil
+local agilitySpooferValue = 100 -- Default agility spoof value
+
+-- Function to handle agility spoofing
+local function setAgilitySpoofing(enabled)
+    if not enabled then
+        -- Stop spoofing
+        if spoofingConnection then
+            spoofingConnection:Disconnect()
+            spoofingConnection = nil
+        end
+
+        -- Restore original agility value if it was changed
+        if oldAgilityValue then
+            local agility = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('Agility')
+            if agility then
+                agility.Value = oldAgilityValue
+            end
+            oldAgilityValue = nil
+        end
+        return
+    end
+
+    -- Start spoofing
+    spoofingConnection = RunService.Heartbeat:Connect(function()
+        local agility = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('Agility')
+        if not agility then return end
+
+        if not oldAgilityValue then
+            oldAgilityValue = agility.Value
+        end
+
+        agility.Value = agilitySpooferValue
+    end)
+end
+
+-- Add a toggle for agility spoofer
+SectieFarm:AddToggle({
+    Name = "Agility Spoofer",
+
+    Default = false,  -- Default state of the toggle (false means agility spoofer is initially disabled)
+    Callback = function(enabled)
+        spoofingEnabled = enabled
+        setAgilitySpoofing(spoofingEnabled)
+    end
+})
+
+-- Add a slider for adjusting agility spoof value
+SectieFarm:AddSlider({
+    Name = "Agility Value",
+    Flag = "AgilitySpooferValue",
+    Value = agilitySpooferValue,  -- Default size value
+    Min = 10,  -- Minimum size value
+    Max = 100,  -- Maximum size value
+    Precise = 2,
+    Callback = function(value)
+        agilitySpooferValue = value
+        if spoofingEnabled then
+            setAgilitySpoofing(false)  -- Stop and restart spoofing with the new value
+            setAgilitySpoofing(true)
+        end
+    end
+})
+
+
 
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -511,840 +999,480 @@ local function intelligenceFarm(toggle)
 end
 
 -- UI Integration
-LeftGroupBox:AddToggle('IntelligenceToggle', {
-    Text = 'Intelligence Farm',
+SectieFarm:AddToggle({
+    Name = 'Intelligence Farm',
     Default = false,
-    Tooltip = 'Toggle Intelligence Farming',
     Callback = function(NewValue)
         intelligenceFarm(NewValue)
     end
 })
-
-
-local Lighting = game:GetService("Lighting")
-local fogEnabled = false
-local renderSteppedConnection = nil
-
-local function enableFog()
-    -- Disable depth of field
-    Lighting.DepthOfField.Enabled = false
-    
-    -- Define the function to handle the fog effect
-    local function handleFog()
-        Lighting.FogEnd = 1000000
-        
-        local atmosphere = Lighting:FindFirstChild("Atmosphere")
-        if atmosphere then
-            atmosphere.Density = 0
-        end
-    end
-    
-    -- Connect the handleFog function to RenderStepped
-    renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(handleFog)
-end
-
-local function disableFog()
-    -- Re-enable depth of field
-    Lighting.DepthOfField.Enabled = true
-    
-    -- Disconnect any existing connections to RenderStepped
-    if renderSteppedConnection then
-        renderSteppedConnection:Disconnect()
-        renderSteppedConnection = nil
-    end
-end
-
-local function toggleFog(enabled)
-    fogEnabled = enabled
-    
-    if fogEnabled then
-        enableFog()
-    else
-        disableFog()
-    end
-end
-
--- Example usage with LeftGroupBox:AddToggle
-LeftGroupBox:AddToggle('ToggleFog', {
-    Text = "Enable No Fog",  -- Text displayed for the toggle
-    Default = false,  -- Default state of the toggle (false means fog is initially disabled)
-    Callback = function(enabled)
-        toggleFog(enabled)  -- Call toggleFog function with the enabled state
-    end
-})
-
-
-local NoClipEnabled = false
-local InfiniteJumpEnabled = false
-local infiniteJumpHeight = 50 -- Default jump height
-local Player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 
--- Functions for NoClip
-local function EnableNoClip()
-    RunService.Stepped:Connect(function()
-        if NoClipEnabled then
-            for _, v in pairs(Player.Character:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanCollide then
-                    v.CanCollide = false
-                end
-            end
+local noWindConnection
+
+local function noWind(t)
+    if not t then
+        if noWindConnection then
+            noWindConnection:Disconnect()
+            noWindConnection = nil
+        end
+        return
+    end
+
+    if noWindConnection then
+        noWindConnection:Disconnect()
+    end
+
+    noWindConnection = RunService.Heartbeat:Connect(function()
+        local player = Players.LocalPlayer
+        if not player then return end
+
+        local character = player.Character
+        if not character then return end
+
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
+
+        local windPusher = rootPart:FindFirstChild('WindPusher')
+        if windPusher then
+            windPusher.Parent = Lighting
         end
     end)
 end
 
-local function DisableNoClip()
-    for _, v in pairs(Player.Character:GetDescendants()) do
-        if v:IsA("BasePart") and not v.CanCollide then
-            v.CanCollide = true
-        end
-    end
-end
-
--- Functions for Infinite Jump
-local function infiniteJump(toggle)
-    InfiniteJumpEnabled = toggle
-
-    if not toggle then return end
-
-    coroutine.wrap(function()
-        while InfiniteJumpEnabled do
-            local character = Player.Character
-            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-
-            if rootPart and UserInputService:IsKeyDown(Enum.KeyCode.Space) and not UserInputService:GetFocusedTextBox() then
-                rootPart.Velocity = Vector3.new(rootPart.Velocity.X, infiniteJumpHeight, rootPart.Velocity.Z)
-            end
-
-            task.wait(0.1)
-        end
-    end)()
-end
-
--- Functions for SpeedHack
-local function ApplySpeed()
-    if Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
-        if Settings.SpeedEnabled then
-            Player.Character.Humanoid.WalkSpeed = Settings.Speed
-        else
-            Player.Character.Humanoid.WalkSpeed = 16 -- Default speed when disabled
-        end
-    end
-end
-
-local function SetupCharacter(character)
-    character:WaitForChild("Humanoid")
-    SpoofProp(character.Humanoid, "WalkSpeed")
-    ApplySpeed()
-
-    character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-        if Settings.SpeedEnabled then
-            character.Humanoid.WalkSpeed = Settings.Speed
-        end
-    end)
-end
-
-Player.CharacterAdded:Connect(SetupCharacter)
-
--- UI Elements
-LeftGroupBox:AddToggle('NoClipToggle', {
-    Text = 'NoClip',
-    Default = false,
-    Tooltip = 'This is noclips',
-    Callback = function(NewValue)
-        NoClipEnabled = NewValue
-        if NoClipEnabled then
-            EnableNoClip()
-        else
-            DisableNoClip()
-        end
+SectieFarm:AddToggle({
+    Name = 'No Wind',
+     Default = false,
+     Callback = function(value)
+        noWind(value)
     end
 })
 
-LeftGroupBox:AddLabel('NoClip Keybind'):AddKeyPicker('NoClipKeyPicker', {
-    Default = 'K',
-    SyncToggleState = true,
-    Mode = 'Toggle',
-    Text = 'NoClip Keybind',
-    NoUI = false,
-    Callback = function(value)
-        NoClipEnabled = not NoClipEnabled
-        if NoClipEnabled then
-            EnableNoClip()
-        else
-            DisableNoClip()
-        end
-        Toggles.NoClipToggle:Set(NoClipEnabled)
-    end,
-})
+local TweenService = game:GetService('TweenService')
+local Players = game:GetService('Players')
+local Workspace = game:GetService('Workspace')
 
-LeftGroupBox:AddToggle('InfJumpToggle', {
-    Text = 'Inf Jump',
-    Default = false,
-    Tooltip = 'Infinite Jump',
-    Callback = function(NewValue)
-        InfiniteJumpEnabled = NewValue
-        infiniteJump(InfiniteJumpEnabled)
+local LocalPlayer = Players.LocalPlayer
+
+-- Function to calculate and execute tween teleportation
+local function tweenTeleport(rootPart, position, noWait)
+    if not rootPart or not position then
+        warn("tweenTeleport: Missing rootPart or position")
+        return
     end
-})
 
-LeftGroupBox:AddLabel('Inf Jump Keybind'):AddKeyPicker('InfJumpKeyPicker', {
-    Default = 'J',
-    SyncToggleState = true,
-    Mode = 'Toggle',
-    Text = 'Inf Jump Keybind',
-    NoUI = false,
-    Callback = function(value)
-        InfiniteJumpEnabled = not InfiniteJumpEnabled
-        infiniteJump(InfiniteJumpEnabled)
-        Toggles.InfJumpToggle:Set(InfiniteJumpEnabled)
-    end,
-})
-
-LeftGroupBox:AddSlider('InfJumpHeightSlider', {
-    Text = "Jump Height",
-    Default = 50,
-    Min = 50,
-    Max = 150,
-    Rounding = 5,
-    Compact = false,
-    Callback = function(value)
-        infiniteJumpHeight = value
-    end
-})
-
--- Define necessary variables
-local Player = game.Players.LocalPlayer
-local Settings = {
-    Speed = 16,
-    SpeedEnabled = true
-}
-
-local Spoofed = {}
-local Clone = game.Clone
-local oldIdx
-local oldNewIdx
-local OldNC
-
-local Methods = {
-    "FindFirstChild",
-    "FindFirstChildOfClass",
-    "FindFirstChildWhichIsA"
-}
-
--- Function to spoof property
-local function SpoofProp(Instance, Property)
-    local Cloned = Clone(Instance)
-
-    table.insert(Spoofed, {
-        Instance = Instance,
-        Property = Property,
-        ClonedInstance = Cloned
+    local distance = (rootPart.Position - position).Magnitude
+    local tween = TweenService:Create(rootPart, TweenInfo.new(distance / 120, Enum.EasingStyle.Linear), {
+        CFrame = CFrame.new(position)
     })
+
+    tween:Play()
+
+    if not noWait then
+        tween.Completed:Wait()
+    end
+
+    return tween
 end
 
--- Hook methods
-oldIdx = hookmetamethod(game, "__index", function(self, key)
-    for i, v in ipairs(Spoofed) do
-        if self == v.Instance and key == v.Property and not checkcaller() then
-            return oldIdx(v.ClonedInstance, key)
-        end
+-- Function to find the closest BloodJar with an ActivatedJar folder
+local function closestBloodJar()
+    local last = math.huge
+    local closest
 
-        if key == "Parent" and (self == v.ClonedInstance or self == v.Instance) and checkcaller() == false then
-            return oldIdx(v.Instance, key)
-        end
+    local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
+    if not rootPart then
+        warn("closestBloodJar: No HumanoidRootPart found")
+        return nil
     end
 
-    return oldIdx(self, key)
-end)
+    local myPos = rootPart.Position
+    local destructibles = Workspace:FindFirstChild('Destructibles')
 
-oldNewIdx = hookmetamethod(game, "__newindex", function(self, key, newval, ...)
-    for i, v in ipairs(Spoofed) do
-        if self == v.Instance and key == v.Property and not checkcaller() then
-            return oldNewIdx(v.ClonedInstance, key, newval, ...)
-        end
-    end
-    return oldNewIdx(self, key, newval, ...)
-end)
-
-OldNC = hookmetamethod(game, "__namecall", function(self, ...)
-    local Method = getnamecallmethod()
-
-    if not table.find(Methods, Method) or Player.Character == nil or self ~= Player.Character then
-        return OldNC(self, ...)
+    if not destructibles then
+        warn("closestBloodJar: No Destructibles found in Workspace")
+        return nil
     end
 
-    local Results = OldNC(self, ...)
+    for _, v in ipairs(destructibles:GetChildren()) do
+        if v.Name == 'BloodJar' and v:FindFirstChild('ActivatedJar') then
+            local pos = v:IsA('BasePart') and v.Position or v:GetPivot().Position
 
-    if Results and Results:IsA("Humanoid") and Player.Character and self == Player.Character then
-        for i, v in ipairs(Spoofed) do
-            if v.Instance == Results then
-                return v.ClonedInstance
+            if (pos - myPos).Magnitude < last then
+                closest = v
+                last = (pos - myPos).Magnitude
             end
         end
     end
-    return OldNC(self, ...)
-end)
 
--- Hook functions for Methods
-for i, Method in ipairs(Methods) do
-    local Old
+    return closest
+end
 
-    Old = hookfunction(game[Method], function(self, ...)
-        if not Player.Character or self ~= Player.Character then
-            return Old(self, ...)
+-- Function to teleport to the closest BloodJar
+local function teleportToClosestBloodJar()
+    local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
+    if not rootPart then
+        warn("teleportToClosestBloodJar: No HumanoidRootPart found")
+        return false
+    end
+
+    local jar = closestBloodJar()
+    if not jar then
+        warn("teleportToClosestBloodJar: No suitable BloodJar found")
+        return false
+    end
+
+    local targetPosition = jar:IsA('BasePart') and jar.Position or jar:GetPivot().Position
+    tweenTeleport(rootPart, targetPosition, true)
+    return true
+end
+
+-- Toggle state variable
+local isToggled = false
+
+-- Function to enable or disable teleportation
+local function toggleTeleportation(enabled)
+    isToggled = enabled
+    if isToggled then
+        print("Teleportation Enabled")
+        while isToggled do
+            local teleported = teleportToClosestBloodJar()
+            if not teleported then
+                isToggled = false
+                print("No more suitable BloodJars. Teleportation Disabled")
+            end
+            wait(0.1)  -- Adjust the wait time as needed
+        end
+    else
+        print("Teleportation Disabled")
+    end
+end
+
+-- SectiePlayer UI toggle for enabling teleportation
+SectieFarm:AddToggle({
+    Name = "Auto-BloodJars",
+    Default = false,
+    Keybind = {
+        Mode = "Dynamic" -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+     },  -- Default state of the toggle (false means teleportation is initially disabled)
+    Callback = function(enabled)
+        toggleTeleportation(enabled)
+    end
+})
+local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local LocalPlayer = Players.LocalPlayer
+
+local activeCirclets = {}
+local contractorStrings = {}
+
+-- Helper function to create a circlet
+local function createCirclet(parent, weldPart, cframe, color)
+    local circlet = game:GetObjects('rbxassetid://12562484379')[1]:Clone()
+    circlet.Size = Vector3.new(1.372, 0.198, 1.396)
+    circlet.Parent = parent
+
+    if color then
+        circlet.Color = color
+    end
+
+    local weld = Instance.new('Weld', circlet)
+    weld.Part0 = weldPart
+    weld.Part1 = circlet
+    weld.C0 = cframe
+
+    return circlet
+end
+
+-- Function to handle Lightborn Circlets
+local function handleLightbornCirclets(enabled, variant)
+    if not enabled then
+        for _, circlet in ipairs(activeCirclets) do
+            circlet:Destroy()
+        end
+        activeCirclets = {}
+        return
+    end
+
+    local function onCharacterAdded(character)
+        if not character then return end
+
+        local circlets = {
+            { partName = 'Head', cframe = CFrame.new(0, 1.5, 0) },
+            { partName = 'Head', cframe = CFrame.new(0, -0.35, 0) },
+            { partName = 'Right Arm', cframe = CFrame.new(0, -0.5, 0) },
+            { partName = 'Left Arm', cframe = CFrame.new(0, -0.5, 0) }
+        }
+
+        local selectedCirclets = {}
+        if variant == 1 then
+            selectedCirclets = { circlets[1] }
+        elseif variant == 2 then
+            selectedCirclets = { circlets[2] }
+        elseif variant == 3 then
+            selectedCirclets = { circlets[3], circlets[4] }
         end
 
-        local Results = Old(self, ...)
+        for _, circletInfo in ipairs(selectedCirclets) do
+            local part = character:FindFirstChild(circletInfo.partName)
+            if part then
+                local circlet = createCirclet(character, part, circletInfo.cframe, Color3.fromRGB(253, 234, 141))
+                table.insert(activeCirclets, circlet)
+            end
+        end
+    end
 
-        if Results and Results:IsA("Humanoid") and Player.Character and self == Player.Character then
-            for i, v in ipairs(Spoofed) do
-                if v.Instance == Results then
-                    return v.ClonedInstance
+    onCharacterAdded(LocalPlayer.Character)
+    LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+end
+
+-- Function to handle Lightborn Skin Color
+local function handleLightbornSkinColor(enabled)
+    local run = true
+    if not enabled then
+        run = false
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                if part:IsA('BasePart') and part.Name ~= 'LightbornCirclet' then
+                    part.Color = Color3.fromRGB(255, 255, 255) -- Reset to original color
                 end
             end
         end
-        return Old(self, ...)
-    end)
-end
-
--- Function to apply speed
-local function ApplySpeed()
-    if Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
-        if Settings.SpeedEnabled then
-            Player.Character.Humanoid.WalkSpeed = Settings.Speed
-        else
-            Player.Character.Humanoid.WalkSpeed = 16 -- Default speed when disabled
-        end
-    end
-end
-
--- Spoof WalkSpeed property initially
-local character = Player.Character
-if character then
-    SpoofProp(character.Humanoid, "WalkSpeed")
-    character.Humanoid.WalkSpeed = Settings.Speed
-end
-
--- Connect to WalkSpeed changes
-if character then
-    character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-        if Settings.SpeedEnabled then
-            character.Humanoid.WalkSpeed = Settings.Speed
-        end
-    end)
-end
-
--- Handle new character addition
-Player.CharacterAdded:Connect(function(character)
-    character:WaitForChild("Humanoid")
-    SpoofProp(character.Humanoid, "WalkSpeed")
-    if Settings.SpeedEnabled then
-        character.Humanoid.WalkSpeed = Settings.Speed
-    else
-        character.Humanoid.WalkSpeed = 16 -- Default speed when disabled
+        return
     end
 
-    character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-        if Settings.SpeedEnabled then
-            character.Humanoid.WalkSpeed = Settings.Speed
-        end
-    end)
-end)
-
--- Add Slider for Speed
-LeftGroupBox:AddSlider('SpeedSlider', {
-    Text = "Speed",
-    Default = Settings.Speed,
-    Min = 16,
-    Max = 160,
-    Rounding = 1,
-    Compact = false,
-    Callback = function(value)
-        Settings.Speed = value
-        ApplySpeed()
-    end
-})
-
--- Add Toggle for SpeedEnabled
-LeftGroupBox:AddToggle('ToggleSpeed', {
-    Text = "Enable Speed",
-    Default = Settings.SpeedEnabled,
-    Callback = function(enabled)
-        Settings.SpeedEnabled = enabled
-        ApplySpeed() -- Apply speed whenever toggle is changed
-    end
-})
-
--- Add Keybind for Speed toggle
-LeftGroupBox:AddLabel('Speed Keybind'):AddKeyPicker('SpeedKeyPicker', {
-    Default = 'L',
-    SyncToggleState = true,
-    Mode = 'Toggle',
-    Text = 'Speed Keybind',
-    NoUI = false,
-    Callback = function(value)
-        Settings.SpeedEnabled = not Settings.SpeedEnabled
-        ApplySpeed()
-        Toggles.ToggleSpeed:Set(Settings.SpeedEnabled)
-    end,
-})
-
-LeftGroupBox:AddDivider()
-
-
--- LocalScript in StarterPlayerScripts or StarterCharacterScripts
-
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-
-local ESPEnabled = false
-local ESPConnections = {}
-
--- Function to create a BillboardGui
-local function createESP(part)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Adornee = part
-    billboard.Size = UDim2.new(0, 50, 0, 25)  -- Smaller default size
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "[Lootbag]"
-    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- White color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-
-    textLabel.Parent = billboard
-    billboard.Parent = part
-end
-
--- Function to update the size of the BillboardGui based on distance
-local function updateESP()
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj.Name == "BagDrop" then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                local distance = (Camera.CFrame.Position - obj.Position).Magnitude
-                local scale = math.clamp(1 / distance * 100, 0.1, 1) -- Adjust scale based on distance
-                billboard.Size = UDim2.new(0, 50 * scale, 0, 25 * scale)
-            end
-        end
-    end
-end
-
--- Function to find and apply ESP to BagDrop objects
-local function applyESP()
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj.Name == "BagDrop" then
-            if not obj:FindFirstChildOfClass("BillboardGui") then
-                createESP(obj)
-            end
-        end
-    end
-end
-
--- Function to enable ESP
-local function enableESP()
-    ESPConnections[#ESPConnections + 1] = Workspace.Thrown.ChildAdded:Connect(function(child)
-        if child.Name == "BagDrop" then
-            createESP(child)
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = Workspace.Thrown.ChildRemoved:Connect(function(child)
-        if child.Name == "BagDrop" and child:FindFirstChildOfClass("BillboardGui") then
-            child:FindFirstChildOfClass("BillboardGui"):Destroy()
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = game:GetService("RunService").RenderStepped:Connect(updateESP)
-
-    applyESP()
-end
-
--- Function to disable ESP
-local function disableESP()
-    for _, connection in ipairs(ESPConnections) do
-        connection:Disconnect()
-    end
-    ESPConnections = {}
-
-    -- Clean up all existing ESP
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj.Name == "BagDrop" then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                billboard:Destroy()
-            end
-        end
-    end
-end
-
--- Toggle setup
-LeftGroupBox:AddToggle('ESPToggle', {
-    Text = 'Esp Lootbag',
-    Default = false,
-    Tooltip = 'Toggle lootbag ESP',
-    Callback = function(NewValue)
-        ESPEnabled = NewValue
-        if ESPEnabled then
-            enableESP()
-        else
-            disableESP()
-        end
-    end
-})
-
-
--- Function to create a billboard for all instances named "Galewax" under Workspace.Ingredients
-local function createGalewaxBillboards()
-    local workspace = game:GetService("Workspace")
-    local ingredientsFolder = workspace:FindFirstChild("Ingredients")
-
-    if ingredientsFolder then
-        local galewaxInstances = ingredientsFolder:GetDescendants()
-
-        for _, instance in ipairs(galewaxInstances) do
-            if instance.Name == "Galewax" then
-                if Settings.BillboardEnabled then
-                    -- Create BillboardGui
-                    local billboard = Instance.new("BillboardGui")
-                    billboard.Size = UDim2.new(0, 100, 0, 20)  -- Smaller size of the billboard
-                    billboard.StudsOffset = Vector3.new(0, 2, 0)  -- Offset from the part it's attached to
-                    billboard.AlwaysOnTop = true  -- Billboard is always on top (visible through walls)
-
-                    -- Create TextLabel inside BillboardGui
-                    local textLabel = Instance.new("TextLabel", billboard)
-                    textLabel.Text = "[" .. instance.Name .. "]"  -- Display name in square brackets
-                    textLabel.TextScaled = true  -- Auto scale text based on the size of the billboard
-                    textLabel.Size = UDim2.new(1, 0, 1, 0)  -- Size of the text label (fill the billboard)
-                    textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)  -- Green color for text
-                    textLabel.BackgroundTransparency = 1  -- Make the background of the text label transparent
-
-                    -- Position the billboard in the game world relative to the instance
-                    billboard.Parent = instance
-                    billboard.Adornee = instance
-                else
-                    -- Remove existing billboards if disabled
-                    for _, child in ipairs(instance:GetChildren()) do
-                        if child:IsA("BillboardGui") then
-                            child:Destroy()
-                        end
-                    end
+    task.spawn(function()
+        while run do
+            task.wait(0.5) -- Reduced update frequency
+            if not LocalPlayer.Character then continue end
+            pcall(function()
+                local faceMount = LocalPlayer.Character.Head:FindFirstChild("FaceMount")
+                if faceMount then
+                    faceMount.DGFace.Texture = "rbxassetid://6466188578"
+                end
+            end)
+            for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                if part:IsA('BasePart') and part.Name ~= 'LightbornCirclet' then
+                    part.Color = Color3.fromRGB(253, 234, 141)
                 end
             end
         end
-    else
-        warn("Ingredients folder not found under Workspace.")
+    end)
+end
+
+-- Function to handle Contractor
+local function handleContractor(enabled)
+    if not enabled then
+        for _, str in ipairs(contractorStrings) do
+            str:Destroy()
+        end
+        contractorStrings = {}
+        return
     end
+
+    local function onCharacterAdded(character)
+        if not character then return end
+        local hrp = character:WaitForChild('HumanoidRootPart', 10)
+        if not hrp then return end
+
+        local string = ReplicatedStorage.Assets.Effects.ContractorString
+
+        local function createString(attachment0, attachment1)
+            local clone = string:Clone()
+            clone.Parent = hrp
+            clone.Attachment0 = attachment0
+            clone.Attachment1 = attachment1
+            table.insert(contractorStrings, clone)
+        end
+
+        local attachment1 = Instance.new("Attachment", hrp)
+        attachment1.Position = Vector3.new(1, 5, 0)
+        attachment1.Name = "StringAttach1"
+        local attachment2 = Instance.new("Attachment", character:FindFirstChild('RightHand'))
+        if attachment2 then
+            attachment2.Position = Vector3.new(0.5, 0, 0)
+            attachment2.Name = "StringAttach2"
+            createString(attachment1, attachment2)
+        end
+
+        attachment1 = Instance.new("Attachment", hrp)
+        attachment1.Position = Vector3.new(-1, 5, 0)
+        attachment1.Name = "StringAttach3"
+        attachment2 = Instance.new("Attachment", character:FindFirstChild('LeftHand'))
+        if attachment2 then
+            attachment2.Position = Vector3.new(-0.5, 0, 0)
+            attachment2.Name = "StringAttach4"
+            createString(attachment1, attachment2)
+        end
+
+        attachment1 = Instance.new("Attachment", hrp)
+        attachment1.Position = Vector3.new(0.5, 5, 0)
+        attachment1.Name = "StringAttach5"
+        attachment2 = character:FindFirstChild('Torso')
+        if attachment2 then
+            local collar = attachment2:FindFirstChild('RightCollarAttachment')
+            if collar then
+                attachment2 = collar
+                attachment2.Name = "StringAttach6"
+                createString(attachment1, attachment2)
+            end
+        end
+
+        attachment1 = Instance.new("Attachment", hrp)
+        attachment1.Position = Vector3.new(-1, 5, 0)
+        attachment1.Name = "StringAttach7"
+        attachment2 = character:FindFirstChild('Torso')
+        if attachment2 then
+            local collar = attachment2:FindFirstChild('LeftCollarAttachment')
+            if collar then
+                attachment2 = collar
+                attachment2.Name = "StringAttach8"
+                createString(attachment1, attachment2)
+            end
+        end
+    end
+
+    onCharacterAdded(LocalPlayer.Character)
+    LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 end
 
--- Function to toggle billboards on/off
-local function toggleBillboards(enabled)
-    Settings.BillboardEnabled = enabled
-    createGalewaxBillboards()  -- Refresh billboards based on the new state
-end
-
--- Example of how to create a toggle in Roblox GUI (assuming a UI library like RoStrap or similar)
-LeftGroupBox:AddToggle('ToggleBillboards', {
-    Text = "Enable Galewax ESP",
+-- Add toggles using SectieVisual:AddToggle
+SectieVisual:AddToggle({
+    Name = "Lightborn Circlets (Variant 1)",
     Default = false,
     Callback = function(enabled)
-        toggleBillboards(enabled)
+        handleLightbornCirclets(enabled, 1)
     end
 })
 
--- LocalScript in StarterPlayerScripts or StarterCharacterScripts
-
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-
-local ESPEnabled = false
-local ESPConnections = {}
-
--- Function to create a BillboardGui
-local function createESP(part)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Adornee = part.RootPart  -- Ensure the billboard is attached to the RootPart
-    billboard.Size = UDim2.new(0, 50, 0, 25)  -- Smaller default size
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "[Chest]"
-    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- White color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-
-    textLabel.Parent = billboard
-    billboard.Parent = part
-end
-
--- Function to update the size of the BillboardGui based on distance
-local function updateESP()
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChild("RootPart") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                local distance = (Camera.CFrame.Position - obj.RootPart.Position).Magnitude
-                local scale = math.clamp(1 / distance * 100, 0.1, 1) -- Adjust scale based on distance
-                billboard.Size = UDim2.new(0, 200 * scale, 0, 100 * scale)
-            end
-        end
-    end
-end
-
--- Function to find and apply ESP to qualifying models
-local function applyESP()
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChild("RootPart")  then
-            if not obj:FindFirstChildOfClass("BillboardGui") then
-                createESP(obj)
-            end
-        end
-    end
-end
-
--- Function to enable ESP
-local function enableESP()
-    ESPConnections[#ESPConnections + 1] = Workspace.Thrown.ChildAdded:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChild("RootPart")  then
-            createESP(child)
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = Workspace.Thrown.ChildRemoved:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChildOfClass("BillboardGui") then
-            child:FindFirstChildOfClass("BillboardGui"):Destroy()
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = game:GetService("RunService").RenderStepped:Connect(updateESP)
-
-    applyESP()
-end
-
--- Function to disable ESP
-local function disableESP()
-    for _, connection in ipairs(ESPConnections) do
-        connection:Disconnect()
-    end
-    ESPConnections = {}
-
-    -- Clean up all existing ESP
-    for _, obj in ipairs(Workspace.Thrown:GetChildren()) do
-        if obj:IsA("Model") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                billboard:Destroy()
-            end
-        end
-    end
-end
-
--- Toggle setup
-LeftGroupBox:AddToggle('ESPToggle', {
-    Text = 'Esp Chest',
+SectieVisual:AddToggle({
+    Name = "Lightborn Circlets (Variant 2)",
     Default = false,
-    Tooltip = 'Toggle Chest ESP',
-    Callback = function(NewValue)
-        ESPEnabled = NewValue
-        if ESPEnabled then
-            enableESP()
-        else
-            disableESP()
-        end
+    Callback = function(enabled)
+        handleLightbornCirclets(enabled, 2)
     end
 })
 
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-
-local ESPEnabled = false
-local ESPConnections = {}
-
--- Function to create a BillboardGui
-local function createESP(part)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Adornee = part
-    billboard.Size = UDim2.new(0, 50, 0, 25)  -- Smaller default size
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = "[Lamp]"
-    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- White color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSansBold
-
-    textLabel.Parent = billboard
-    billboard.Parent = part
-end
-
--- Function to update the size of the BillboardGui based on distance
-local function updateESP()
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                local distance = (Camera.CFrame.Position - obj.PrimaryPart.Position).Magnitude
-                local scale = math.clamp(1 / distance * 100, 0.1, 1) -- Adjust scale based on distance
-                billboard.Size = UDim2.new(0, 50 * scale, 0, 25 * scale)
-            end
-        end
-    end
-end
-
--- Function to find and apply ESP to qualifying models
-local function applyESP()
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChildWhichIsA("MeshPart") and obj:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            if not obj:FindFirstChildOfClass("BillboardGui") then
-                createESP(obj)
-            end
-        end
-    end
-end
-
--- Function to enable ESP
-local function enableESP()
-    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildAdded:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChildWhichIsA("MeshPart") and child:FindFirstChildWhichIsA("MeshPart").Name:lower():find("lamp") then
-            createESP(child)
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = Workspace.Layer2Floor1.ChildRemoved:Connect(function(child)
-        if child:IsA("Model") and child:FindFirstChildOfClass("BillboardGui") then
-            child:FindFirstChildOfClass("BillboardGui"):Destroy()
-        end
-    end)
-
-    ESPConnections[#ESPConnections + 1] = game:GetService("RunService").RenderStepped:Connect(updateESP)
-
-    applyESP()
-end
-
--- Function to disable ESP
-local function disableESP()
-    for _, connection in ipairs(ESPConnections) do
-        connection:Disconnect()
-    end
-    ESPConnections = {}
-
-    -- Clean up all existing ESP
-    for _, obj in ipairs(Workspace.Layer2Floor1:GetChildren()) do
-        if obj:IsA("Model") then
-            local billboard = obj:FindFirstChildOfClass("BillboardGui")
-            if billboard then
-                billboard:Destroy()
-            end
-        end
-    end
-end
-
--- Toggle setup
-LeftGroupBox:AddToggle('ESPToggle', {
-    Text = 'ESP Lamp',
+SectieVisual:AddToggle({
+    Name = "Lightborn Circlets (Variant 3)",
     Default = false,
-    Tooltip = 'Toggle Lamp ESP',
-    Callback = function(NewValue)
-        ESPEnabled = NewValue
-        if ESPEnabled then
-            enableESP()
-        else
-            disableESP()
-        end
+    Callback = function(enabled)
+        handleLightbornCirclets(enabled, 3)
     end
 })
 
+SectieVisual:AddToggle({
+    Name = "Lightborn Skin Color",
+    Default = false,
+    Callback = handleLightbornSkinColor
+})
 
-Library:SetWatermarkVisibility(false)
+SectieVisual:AddToggle({
+    Name = "Contractor",
+    Default = false,
+    Callback = handleContractor
+})
 
--- Example of dynamically-updating watermark with common traits (fps and ping)
-local FrameTimer = tick()
-local FrameCounter = 0;
-local FPS = 60;
+-- Wait until the game is fully loaded
+repeat
+    task.wait()
+until game:IsLoaded()
 
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter += 1;
+-- Function to clone a reference
+local cloneref = cloneref or function(o) return o end
 
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter;
-        FrameTimer = tick();
-        FrameCounter = 0;
-    end;
+-- Services and references
+local Players = cloneref(game:GetService("Players"))
+local TextChatService = cloneref(game:GetService("TextChatService"))
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+local LocalPlayer = Players.LocalPlayer
 
-    Library:SetWatermark(('Rares Hub| %s fps | %s ms'):format(
-        math.floor(FPS),
-        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
-    ));
-end);
+-- Fake user ID for the local player
+local FakeUserId = "RARES HUB BEST"
 
-Library.KeybindFrame.Visible = true; -- todo: add a function for this
+-- Streamer mode toggle
+local streamerModeEnabled = false
 
-Library:OnUnload(function()
-    WatermarkConnection:Disconnect()
+-- Function to update player-related objects with fake user ID
+local function UpdatePlayerUserId(Object, Property)
+    if streamerModeEnabled then
+        Object[Property] = Object[Property]:gsub(tostring(LocalPlayer.UserId), tostring(FakeUserId))
+    else
+        Object[Property] = Object[Property]:gsub(tostring(FakeUserId), tostring(LocalPlayer.UserId))
+    end
+end
 
-    print('Unloaded!')
-    Library.Unloaded = true
+-- Function to update specific types of objects
+local function NewObject(Object)
+    if Object:IsA("TextLabel") or Object:IsA("TextButton") or Object:IsA("TextBox") then
+        UpdatePlayerUserId(Object, "Text")
+        Object:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdatePlayerUserId(Object, "Text")
+        end)
+    elseif Object:IsA("ImageLabel") or Object:IsA("ImageButton") then
+        UpdatePlayerUserId(Object, "Image")
+        Object:GetPropertyChangedSignal("Image"):Connect(function()
+            UpdatePlayerUserId(Object, "Image")
+        end)
+    end
+end
+
+-- Function to update all objects in the game
+local function UpdateAllObjects()
+    for _, Object in pairs(game:GetDescendants()) do
+        NewObject(Object)
+    end
+end
+
+-- Initial update of all objects
+UpdateAllObjects()
+
+-- Event handler for new objects being added to the game
+game.DescendantAdded:Connect(NewObject)
+
+-- Event handler for new players joining the game
+Players.PlayerAdded:Connect(function(Player)
+    Player.CharacterAdded:Connect(function(Character)
+        -- Wait for the character to load fully
+        Character:WaitForChild("Humanoid")
+
+        -- Update the player's objects
+        for _, Object in pairs(Character:GetDescendants()) do
+            NewObject(Object)
+        end
+    end)
+
+    -- If the player is already in the game, update their objects
+    if Player.Character then
+        for _, Object in pairs(Player.Character:GetDescendants()) do
+            NewObject(Object)
+        end
+    end
 end)
 
--- UI Settings
-local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+-- Event handler for text chat messages (depending on TextChatService version)
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+    TextChatService.MessageReceived:Connect(function(MessageData)
+        NewObject(MessageData)
+    end)
+else
+    ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(function(MessageData)
+        NewObject(MessageData)
+    end)
+end
 
--- I set NoUI so it does not show up in the keybinds menu
-MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'RightShift', NoUI = true, Text = 'Menu keybind' })
+-- Toggle for streamer mode
+SectiePlayer:AddToggle({
+    Name = "Streamer Mode",
+    Keybind = {
+        Mode = "Dynamic", -- Dynamic means to use the 'hold' method, if the user keeps the button pressed for longer than 0.65 seconds; else use toggle method
+    },
+    Value = streamerModeEnabled,
+    Callback = function(NewValue)
+        streamerModeEnabled = NewValue
+        UpdateAllObjects()  -- Call this to update all objects with new mode
+    end
+})
 
-Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
-
--- Addons:
--- SaveManager (Allows you to have a configuration system)
--- ThemeManager (Allows you to have a menu theme system)
-
--- Hand the library over to our managers
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-
--- Ignore keys that are used by ThemeManager.
--- (we dont want configs to save themes, do we?)
-SaveManager:IgnoreThemeSettings()
-
--- Adds our MenuKeybind to the ignore list
--- (do you want each config to have a different menu key? probably not.)
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
-
--- use case for doing it this way:
--- a script hub could have themes in a global folder
--- and game configs in a separate folder per game
-ThemeManager:SetFolder('MyScriptHub')
-SaveManager:SetFolder('MyScriptHub/specific-game')
-
--- Builds our config menu on the right side of our tab
-SaveManager:BuildConfigSection(Tabs['UI Settings'])
-
--- Builds our theme menu (with plenty of built in themes) on the left side
--- NOTE: you can also call ThemeManager:ApplyToGroupbox to add it to a specific groupbox
-ThemeManager:ApplyToTab(Tabs['UI Settings'])
-
--- You can use the SaveManager:LoadAutoloadConfig() to load a config
--- which has been marked to be one that auto loads!
-SaveManager:LoadAutoloadConfig()

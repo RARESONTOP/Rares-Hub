@@ -1,5 +1,3 @@
-local Notification = sharedRequire('Notifications.lua');
-
 local library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
 local Wait = library.subs.Wait -- Only returns if the GUI has not been terminated. For 'while Wait() do' loops
 
@@ -925,65 +923,6 @@ SectieFarm:AddSlider({
             setAgilitySpoofing(false)  -- Stop and restart spoofing with the new value
             setAgilitySpoofing(true)
         end
-    end
-})
-
--- Boolean flag to control whether notifications are active
-local notifierActive = false
-
--- Function to check if a player has the specific tool
-local function checkPlayerForVoidwalker(player)
-    local backpack = player:FindFirstChild("Backpack")
-    if backpack then
-        local tool = backpack:FindFirstChild("Talent:Voideye")
-        if tool then
-            if notifierActive then
-                Notification.new({
-                    text = player.Name .. " is a voidwalker",
-                    duration = 5
-                })
-            end
-        end
-    end
-end
-
--- Function to handle player addition
-local function onPlayerAdded(player)
-    -- Check the player when they join the game
-    checkPlayerForVoidwalker(player)
-
-    -- Also check when the player's backpack changes
-    player.ChildAdded:Connect(function(child)
-        if child:IsA("Backpack") then
-            child.ChildAdded:Connect(function(tool)
-                if tool:IsA("Tool") and tool.Name == "Talent:Voideye" then
-                    if notifierActive then
-                        Notification.new({
-                            text = player.Name .. " is a voidwalker",
-                            duration = 5
-                        })
-                    end
-                end
-            end)
-        end
-    end)
-end
-
--- Connect to players already in the game
-for _, player in pairs(Players:GetPlayers()) do
-    onPlayerAdded(player)
-end
-
--- Connect to players who join the game in the future
-Players.PlayerAdded:Connect(onPlayerAdded)
-
--- Create the GUI toggle for the Voidwalker Notifier
-SectieFarm:AddToggle({
-    Name = "Voidwalker Notifier",
-    Default = false,  -- Default state of the toggle (false means notifier is initially disabled)
-    Callback = function(enabled)
-        notifierActive = enabled
-        print("Voidwalker Notifier is now " .. (enabled and "enabled" or "disabled"))
     end
 })
 
